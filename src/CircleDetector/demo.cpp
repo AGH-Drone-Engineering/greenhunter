@@ -22,9 +22,25 @@ int main(int argc, char **argv)
 
         circleDetector.getColorMasks(img_hsv, mask_brown, mask_gold, mask_beige);
 
-        imshow("brown", mask_brown);
-        imshow("gold", mask_gold);
-        imshow("beige", mask_beige);
+        Mat img_cnt_brown = img_raw.clone();
+        Mat img_cnt_gold = img_raw.clone();
+        Mat img_cnt_beige = img_raw.clone();
+
+        vector<vector<Point>> cnt_brown;
+        findContours(mask_brown, cnt_brown, RETR_LIST, CHAIN_APPROX_SIMPLE);
+        drawContours(img_cnt_brown, cnt_brown, -1, Scalar(0, 0, 255));
+
+        vector<vector<Point>> cnt_gold;
+        findContours(mask_gold, cnt_gold, RETR_LIST, CHAIN_APPROX_SIMPLE);
+        drawContours(img_cnt_gold, cnt_gold, -1, Scalar(0, 0, 255));
+
+        vector<vector<Point>> cnt_beige;
+        findContours(mask_beige, cnt_beige, RETR_LIST, CHAIN_APPROX_SIMPLE);
+        drawContours(img_cnt_beige, cnt_beige, -1, Scalar(0, 0, 255));
+
+        imshow("brown", img_cnt_brown);
+        imshow("gold", img_cnt_gold);
+        imshow("beige", img_cnt_beige);
 
         waitKey();
     }
