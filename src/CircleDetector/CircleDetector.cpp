@@ -32,7 +32,7 @@ vector<CircleDetector::Circle> CircleDetector::detectCircles(InputArray src)
     vector<Vec4i> hier;
     findContours(edges, cnts, hier, RETR_TREE, CHAIN_APPROX_SIMPLE);
 
-    vector<RotatedRect> objects;
+    vector<Circle> circles;
 
     for (int i = 0; i < cnts.size(); ++i)
     {
@@ -56,14 +56,57 @@ vector<CircleDetector::Circle> CircleDetector::detectCircles(InputArray src)
         if (circularity < _config.predCircularityMin) continue;
         if (convexity < _config.predConvexityMin) continue;
 
-        objects.push_back(obj);
-    }
+        Rect obj_rect = obj.boundingRect() & Rect(0, 0, img.cols, img.rows);
 
-    vector<Circle> circles;
+        Mat obj_mask = Mat::zeros(obj_rect.size(), img.type());
+        ellipse(
+            obj_mask,
+            RotatedRect(
+                obj.center - Point2f(obj_rect.tl()),
+                obj.size,
+                obj.angle
+            ),
+            Scalar(255, 255, 255),
+            FILLED
+        );
 
-    for (const auto &obj : objects)
-    {
-        circles.push_back({CircleType::Brown, obj});
+        Mat obj_img;
+        img(obj_rect).copyTo(obj_img, obj_mask);
+
+        cvtColor(obj_img, obj_img, COLOR_BGR2HSV_FULL);
+
+        Mat err_brown, err_gold, err_beige;
+        absdiff(obj_img, _config.brown, err_brown);
+        absdiff(obj_img, _config.gold, err_gold);
+        absdiff(obj_img, _config.beige, err_beige);
+
+        Mat err_h, err_s, err_v;
+
+        extractChannel(err_brown, err_h, 0);
+        extractChannel(err_brown, err_s, 1);
+        extractChannel(err_brown, err_v, 2);
+        err_brown = err_h + err_s + err_v;
+
+        extractChannel(err_gold, err_h, 0);
+        extractChannel(err_gold, err_s, 1);
+        extractChannel(err_gold, err_v, 2);
+        err_gold = err_h + err_s + err_v;
+
+        extractChannel(err_beige, err_h, 0);
+        extractChannel(err_beige, err_s, 1);
+        extractChannel(err_beige, err_v, 2);
+        err_beige = err_h + err_s + err_v;
+
+        double err_brown_mean = mean(err_brown)[0];
+        double err_gold_mean = mean(err_gold)[0];
+        double err_beige_mean = mean(err_beige)[0];
+
+        if (err_brown_mean <= err_gold_mean && err_gold_mean <= err_beige_mean)
+            circles.push_back({CircleType::Brown, obj});
+        else if (err_gold_mean <= err_brown_mean && err_brown_mean <= err_beige_mean)
+            circles.push_back({CircleType::Gold, obj});
+        else
+            circles.push_back({CircleType::Beige, obj});
     }
 
     return circles;
