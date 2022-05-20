@@ -69,6 +69,7 @@ vector<CircleDetector::Circle> CircleDetector::detectCircles(InputArray src)
             Scalar(255, 255, 255),
             FILLED
         );
+        erode(obj_mask, obj_mask, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
 
         Mat obj_img;
         img(obj_rect).copyTo(obj_img, obj_mask);
