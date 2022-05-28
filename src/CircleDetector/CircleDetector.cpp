@@ -86,17 +86,23 @@ vector<CircleDetector::Circle> CircleDetector::detectCircles(InputArray src)
         extractChannel(err_brown, err_h, 0);
         extractChannel(err_brown, err_s, 1);
         extractChannel(err_brown, err_v, 2);
-        err_brown = err_h + err_s + err_v;
+//        err_brown = err_h + err_s + err_v;
+        add(err_h, err_s, err_brown);
+        add(err_brown, err_v, err_brown);
 
         extractChannel(err_gold, err_h, 0);
         extractChannel(err_gold, err_s, 1);
         extractChannel(err_gold, err_v, 2);
-        err_gold = err_h + err_s + err_v;
+//        err_gold = err_h + err_s + err_v;
+        add(err_h, err_s, err_gold);
+        add(err_gold, err_v, err_gold);
 
         extractChannel(err_beige, err_h, 0);
         extractChannel(err_beige, err_s, 1);
         extractChannel(err_beige, err_v, 2);
-        err_beige = err_h + err_s + err_v;
+//        err_beige = err_h + err_s + err_v;
+        add(err_h, err_s, err_beige);
+        add(err_beige, err_v, err_beige);
 
         double err_brown_mean = mean(err_brown)[0];
         double err_gold_mean = mean(err_gold)[0];
