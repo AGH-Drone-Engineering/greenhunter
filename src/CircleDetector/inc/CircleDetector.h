@@ -9,8 +9,8 @@ class CircleDetector
 public:
     struct Config
     {
-        int medianSize = 9;
-        int medianIters = 3;
+        int medianSize = 5;
+        int medianIters = 10;
 
         double cannyTh1 = 150;
         double cannyTh2 = 200;
