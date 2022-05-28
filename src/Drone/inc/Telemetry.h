@@ -3,7 +3,14 @@
 
 struct Telemetry
 {
+    double heading;
+    double pitch;
+    double roll;
 
+    double alt;
+
+    double lat;
+    double lng;
 };
 
 #endif

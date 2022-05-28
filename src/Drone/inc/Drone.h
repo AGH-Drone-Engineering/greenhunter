@@ -6,6 +6,7 @@
 class Drone
 {
 public:
+    FrameTelemetry getFrameWithTelemetry();
 
 private:
 
