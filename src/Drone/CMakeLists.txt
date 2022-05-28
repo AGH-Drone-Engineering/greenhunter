@@ -1,0 +1,17 @@
+set(TARGET Drone)
+
+set(SRCS
+    inc/Drone.h
+    inc/Telemetry.h
+    inc/FrameTelemetry.h
+    Drone.cpp
+)
+
+set(DEPS
+    PUBLIC
+    ${OpenCV_LIBS}
+)
+
+add_library(${TARGET} STATIC ${SRCS})
+target_include_directories(${TARGET} PUBLIC inc)
+target_link_libraries(${TARGET} ${DEPS})
