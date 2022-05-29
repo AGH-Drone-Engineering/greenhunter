@@ -49,5 +49,10 @@ void Scout::run()
 
     cout << "Circles on map: " << _map.getAll().size() << endl;
 
+    canvas = Mat::zeros(1024, 1024, CV_8UC1);
+    _map.draw(canvas, {-1, -1}, {1, 1});
+    namedWindow("Map", WINDOW_NORMAL);
+    imshow("Map", canvas);
+
     waitKey();
 }

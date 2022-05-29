@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include <opencv2/core.hpp>
+
 #include "MapLocalizer.h"
 
 class CircleMap
@@ -16,6 +18,10 @@ public:
     void push(const Circle &circle);
 
     const std::vector<Circle>& getAll();
+
+    void draw(cv::InputOutputArray canvas,
+              MapLocalizer::Coords top_left,
+              MapLocalizer::Coords bottom_right);
 
 private:
     std::vector<Circle> _circles;
