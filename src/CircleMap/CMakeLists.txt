@@ -10,6 +10,7 @@ set(SRCS
 set(DEPS
     PUBLIC
     ${OpenCV_LIBS}
+    Drone
 )
 
 add_library(${TARGET} STATIC ${SRCS})
