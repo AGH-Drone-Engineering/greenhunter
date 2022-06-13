@@ -27,9 +27,11 @@ boost::optional<FrameTelemetry> Drone::getFrameWithTelemetry()
 
     auto frame = getFrame();
 
+    double fov_h = 60. * boost::geometry::math::d2r<double>();
+
     CameraParams camera = {
-        60. * frame.size().aspectRatio() * boost::geometry::math::d2r<double>(),
-        60. * boost::geometry::math::d2r<double>(),
+        fov_h,
+        2. * atan(tan(fov_h * 0.5) / frame.size().aspectRatio()),
         frame.size().width,
         frame.size().height
     };
