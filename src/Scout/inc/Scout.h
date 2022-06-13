@@ -7,6 +7,7 @@
 #include "CircleDetector.h"
 #include "MapLocalizer.h"
 #include "CircleMap.h"
+#include "MapServer.h"
 
 class Scout
 {
@@ -14,6 +15,7 @@ public:
     struct Params
     {
         Drone::Params drone_params;
+        short map_port = 6869;
     };
 
     Scout(boost::asio::io_context &io_context, const Params &params);
@@ -25,6 +27,7 @@ private:
     CircleDetector _detector;
     MapLocalizer _localizer;
     CircleMap _map;
+    MapServer _map_server;
 };
 
 #endif

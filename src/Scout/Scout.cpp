@@ -18,6 +18,7 @@ static constexpr MapLocalizer::Coords MAP_BOTTOM_RIGHT = {
 
 Scout::Scout(boost::asio::io_context &io_context, const Params &params)
     : _drone(io_context, params.drone_params)
+    , _map_server(io_context, _map, params.map_port)
 {}
 
 void Scout::run()
