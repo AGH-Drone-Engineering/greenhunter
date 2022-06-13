@@ -5,9 +5,10 @@
 #include <boost/geometry.hpp>
 
 namespace bg = boost::geometry;
-typedef bg::model::point<double, 2, bg::cs::geographic<bg::radian>> GeopointRad;
 typedef bg::formula::vincenty_inverse<double, true, true> vin_inv;
 typedef bg::formula::vincenty_direct<double, true> vin_dir;
+
+typedef MapLocalizer::Coords Coords;
 
 using namespace std;
 using namespace cv;
@@ -26,23 +27,18 @@ void CircleMap::draw(InputOutputArray canvas)
 {
     if (_circles.empty()) return;
 
-    double lon_min = _circles[0].coords.lng;
-    double lat_min = _circles[0].coords.lat;
+    double lon_min = _circles[0].coords.get<0>();
+    double lat_min = _circles[0].coords.get<1>();
     double lon_max = lon_min;
     double lat_max = lat_min;
 
     for (const auto &c : _circles)
     {
-        lon_min = min(lon_min, c.coords.lng);
-        lon_max = max(lon_max, c.coords.lng);
-        lat_min = min(lat_min, c.coords.lat);
-        lat_max = max(lat_max, c.coords.lat);
+        lon_min = min(lon_min, c.coords.get<0>());
+        lon_max = max(lon_max, c.coords.get<0>());
+        lat_min = min(lat_min, c.coords.get<1>());
+        lat_max = max(lat_max, c.coords.get<1>());
     }
-
-    lon_min *= bg::math::d2r<double>();
-    lon_max *= bg::math::d2r<double>();
-    lat_min *= bg::math::d2r<double>();
-    lat_max *= bg::math::d2r<double>();
 
     auto bottom_left_offset = vin_dir::apply(
         lon_min,
@@ -71,14 +67,14 @@ void CircleMap::draw(InputOutputArray canvas)
 
     double px_per_m_x = canvas.size().width /
         bg::distance(
-            GeopointRad(lon_min, lat_center),
-            GeopointRad(lon_max, lat_center)
+            Coords(lon_min, lat_center),
+            Coords(lon_max, lat_center)
         );
 
     double px_per_m_y = canvas.size().height /
         bg::distance(
-            GeopointRad(lon_center, lat_min),
-            GeopointRad(lon_center, lat_max)
+            Coords(lon_center, lat_min),
+            Coords(lon_center, lat_max)
         );
 
     double px_per_m = min(px_per_m_x, px_per_m_y);
@@ -88,8 +84,8 @@ void CircleMap::draw(InputOutputArray canvas)
         auto res = vin_inv::apply(
             lon_min,
             lat_min,
-            c.coords.lng * bg::math::d2r<double>(),
-            c.coords.lat * bg::math::d2r<double>(),
+            c.coords.get<0>(),
+            c.coords.get<1>(),
             bg::srs::spheroid<double>()
         );
 

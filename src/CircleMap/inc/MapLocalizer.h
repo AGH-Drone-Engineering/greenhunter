@@ -2,6 +2,7 @@
 #define GREENHUNTER_MAP_LOCALIZER_H
 
 #include <opencv2/core.hpp>
+#include <boost/geometry.hpp>
 
 #include "Telemetry.h"
 #include "CameraParams.h"
@@ -9,11 +10,10 @@
 class MapLocalizer
 {
 public:
-    struct Coords
-    {
-        double lat;
-        double lng;
-    };
+    typedef boost::geometry::model::point<
+        double, 2, boost::geometry::cs::geographic<
+            boost::geometry::radian>>
+        Coords;
 
     Coords localize(const cv::Point &frame_point,
                     const Telemetry &telemetry,

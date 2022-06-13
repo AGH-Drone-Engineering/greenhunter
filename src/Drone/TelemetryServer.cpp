@@ -3,6 +3,7 @@
 #include <iostream>
 #include <boost/bind/bind.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/geometry.hpp>
 
 using boost::asio::ip::tcp;
 using boost::asio::io_context;
@@ -120,19 +121,19 @@ void TelemetryServer::Connection::handleRead(const boost::system::error_code &er
             {
                 case 'y':
                     cout << "Got yaw " << val << endl;
-                    _server._telemetry.azimuth = val;
+                    _server._telemetry.azimuth = val * boost::geometry::math::d2r<double>();
                     _server._azi_valid = true;
                     break;
 
                 case 'l':
                     cout << "Got latitude " << val << endl;
-                    _server._telemetry.position.set<1>(val);
+                    _server._telemetry.position.set<1>(val * boost::geometry::math::d2r<double>());
                     _server._lat_valid = true;
                     break;
 
                 case 'g':
                     cout << "Got longitude " << val << endl;
-                    _server._telemetry.position.set<0>(val);
+                    _server._telemetry.position.set<0>(val * boost::geometry::math::d2r<double>());
                     _server._lon_valid = true;
                     break;
 

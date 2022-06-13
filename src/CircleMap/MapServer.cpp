@@ -69,10 +69,10 @@ tcp::socket& MapServer::Connection::socket()
 void MapServer::Connection::startWrite()
 {
     std::stringstream msg;
-    msg.precision(12);
+    msg.precision(15);
     for (const auto &c : _map.getAll())
     {
-        msg << c.coords.lng << "," << c.coords.lat << "\n";
+        msg << c.coords.get<0>() << "," << c.coords.get<1>() << "\n";
     }
     msg.flush();
     boost::asio::async_write(

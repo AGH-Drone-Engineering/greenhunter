@@ -1,6 +1,7 @@
 #include "Drone.h"
 
 #include <opencv2/imgcodecs.hpp>
+#include <boost/geometry.hpp>
 
 using namespace cv;
 
@@ -27,8 +28,8 @@ boost::optional<FrameTelemetry> Drone::getFrameWithTelemetry()
     auto frame = getFrame();
 
     CameraParams camera = {
-        60,
-        60. * frame.size().height / frame.size().width,
+        60. * frame.size().aspectRatio() * boost::geometry::math::d2r<double>(),
+        60. * boost::geometry::math::d2r<double>(),
         frame.size().width,
         frame.size().height
     };
