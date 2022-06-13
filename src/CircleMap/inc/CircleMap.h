@@ -19,9 +19,7 @@ public:
 
     const std::vector<Circle>& getAll();
 
-    void draw(cv::InputOutputArray canvas,
-              MapLocalizer::Coords top_left,
-              MapLocalizer::Coords bottom_right);
+    void draw(cv::InputOutputArray canvas);
 
 private:
     std::vector<Circle> _circles;

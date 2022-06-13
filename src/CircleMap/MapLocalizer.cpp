@@ -1,24 +1,36 @@
 #include "MapLocalizer.h"
 
 #include <cmath>
+#include <boost/geometry.hpp>
 
-using namespace std;
-using namespace cv;
+namespace bg = boost::geometry;
+typedef bg::model::point<double, 2, bg::cs::geographic<bg::radian>> GeopointRad;
+typedef bg::model::point<double, 2, bg::cs::geographic<bg::degree>> GeopointDeg;
+typedef bg::formula::vincenty_direct<double, true> vincenty;
 
-static constexpr double R_EARTH = 6371000;
-
-MapLocalizer::Coords MapLocalizer::localize(const Point &frame_point,
+MapLocalizer::Coords MapLocalizer::localize(const cv::Point &frame_point,
                                             const Telemetry &telemetry,
                                             const CameraParams &camera_params)
 {
-    double ground_width = 2 * telemetry.alt * tan(camera_params.fov_h * 0.5 * M_PI / 180);
-    double ground_height = 2 * telemetry.alt * tan(camera_params.fov_v * 0.5 * M_PI / 180);
+    double ground_width = 2 * telemetry.alt * tan(camera_params.fov_h * (0.5 * M_PI / 180.));
+    double ground_height = 2 * telemetry.alt * tan(camera_params.fov_v * (0.5 * M_PI / 180.));
 
     double dx = (frame_point.x - 0.5 * camera_params.frame_width) * ground_width / camera_params.frame_width;
     double dy = (0.5 * camera_params.frame_height - frame_point.y) * ground_height / camera_params.frame_height;
 
+    double dist = sqrt(dx*dx + dy*dy);
+    double azi_rad = -atan2(dy, dx) + M_PI_2;
+
+    auto res = vincenty::apply(
+        telemetry.lng * bg::math::d2r<double>(),
+        telemetry.lat * bg::math::d2r<double>(),
+        dist,
+        azi_rad,
+        bg::srs::spheroid<double>()
+    );
+
     return {
-        telemetry.lat + (dy / R_EARTH) * (180 / M_PI),
-        telemetry.lng + (dx / R_EARTH) * (180 / M_PI) / cos(telemetry.lat * M_PI / 180)
+        .lat = res.lat2 * bg::math::r2d<double>(),
+        .lng = res.lon2 * bg::math::r2d<double>()
     };
 }
