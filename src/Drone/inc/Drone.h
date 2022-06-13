@@ -2,6 +2,7 @@
 #define GREENHUNTER_DRONE_H
 
 #include <boost/asio.hpp>
+#include <boost/optional.hpp>
 
 #include "FrameTelemetry.h"
 #include "TelemetryServer.h"
@@ -16,7 +17,13 @@ public:
 
     Drone(boost::asio::io_context &io_context, const Params &params);
 
-    FrameTelemetry getFrameWithTelemetry();
+    cv::Mat getFrame();
+
+    boost::optional<Telemetry> getTelemetry();
+
+    boost::optional<FrameTelemetry> getFrameWithTelemetry();
+
+    void waitTelemetryValid();
 
 private:
     TelemetryServer _telem_server;

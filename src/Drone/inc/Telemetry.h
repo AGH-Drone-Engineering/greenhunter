@@ -1,16 +1,19 @@
 #ifndef GREENHUNTER_TELEMETRY_H
 #define GREENHUNTER_TELEMETRY_H
 
+#include <boost/geometry.hpp>
+
 struct Telemetry
 {
-    double heading;
-    double pitch;
-    double roll;
+    typedef boost::geometry::model::point<
+        double, 2,
+        boost::geometry::cs::geographic<
+            boost::geometry::radian>>
+        Position;
 
-    double alt;
-
-    double lat;
-    double lng;
+    double altitude;
+    double azimuth;
+    Position position;
 };
 
 #endif

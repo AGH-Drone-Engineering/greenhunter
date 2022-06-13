@@ -8,19 +8,23 @@ Drone::Drone(boost::asio::io_context &io_context, const Params &params)
     : _telem_server(io_context, params.telem_port)
 {}
 
-FrameTelemetry Drone::getFrameWithTelemetry()
+cv::Mat Drone::getFrame()
 {
-    Mat frame = imread("data/im7.jpeg");
-    frame = frame(Rect(0, 0, frame.size().height, frame.size().height));
+    return imread("data/im7.jpeg");
+}
 
-    Telemetry telemetry = {
-        0,
-        0,
-        0,
-        10,
-        50.093059,
-        19.818654
-    };
+boost::optional<Telemetry> Drone::getTelemetry()
+{
+    return _telem_server.latest();
+}
+
+boost::optional<FrameTelemetry> Drone::getFrameWithTelemetry()
+{
+    auto telemetry_opt = getTelemetry();
+    if (!telemetry_opt) return boost::none;
+    auto telemetry = *telemetry_opt;
+
+    auto frame = getFrame();
 
     CameraParams camera = {
         60,
@@ -29,9 +33,14 @@ FrameTelemetry Drone::getFrameWithTelemetry()
         frame.size().height
     };
 
-    return {
+    return boost::make_optional<FrameTelemetry>({
         frame,
         camera,
         telemetry
-    };
+    });
+}
+
+void Drone::waitTelemetryValid()
+{
+    _telem_server.waitValid();
 }

@@ -15,50 +15,57 @@ Scout::Scout(boost::asio::io_context &io_context, const Params &params)
 
 void Scout::run()
 {
-    auto frameTelemetry = _drone.getFrameWithTelemetry();
-    auto frameCircles = _detector.detectCircles(frameTelemetry.frame);
+    _drone.waitTelemetryValid();
 
-    Mat canvas = frameTelemetry.frame.clone();
-    for (const auto &c : frameCircles)
+    for (;;)
     {
-        ellipse(canvas, c.ellipse, Scalar(0, 0, 255), 2);
-        switch (c.type)
+        auto frameTelemetryOpt = _drone.getFrameWithTelemetry();
+        if (!frameTelemetryOpt) break;
+        auto frameTelemetry = *frameTelemetryOpt;
+        auto frameCircles = _detector.detectCircles(frameTelemetry.frame);
+
+        Mat canvas = frameTelemetry.frame.clone();
+        for (const auto &c : frameCircles)
         {
-            case CircleDetector::CircleType::Brown:
-                putText(canvas, "Brown", c.ellipse.boundingRect().tl(), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255));
-                break;
-            case CircleDetector::CircleType::Gold:
-                putText(canvas, "Gold", c.ellipse.boundingRect().tl(), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255));
-                break;
-            case CircleDetector::CircleType::Beige:
-                putText(canvas, "Beige", c.ellipse.boundingRect().tl(), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255));
-                break;
+            ellipse(canvas, c.ellipse, Scalar(0, 0, 255), 2);
+            switch (c.type)
+            {
+                case CircleDetector::CircleType::Brown:
+                    putText(canvas, "Brown", c.ellipse.boundingRect().tl(), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255));
+                    break;
+                case CircleDetector::CircleType::Gold:
+                    putText(canvas, "Gold", c.ellipse.boundingRect().tl(), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255));
+                    break;
+                case CircleDetector::CircleType::Beige:
+                    putText(canvas, "Beige", c.ellipse.boundingRect().tl(), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255));
+                    break;
+            }
         }
+        namedWindow("Detections", WINDOW_NORMAL);
+        imshow("Detections", canvas);
+
+        for (const auto &fc : frameCircles)
+        {
+            const auto coords = _localizer.localize(
+                fc.ellipse.center,
+                frameTelemetry.telemetry,
+                frameTelemetry.camera
+            );
+
+            CircleMap::Circle mc = {
+                coords
+            };
+
+            _map.push(mc);
+        }
+
+        cout << "Circles on map: " << _map.getAll().size() << endl;
+
+        canvas = Mat::zeros(1024, 1024, CV_8UC1);
+        _map.draw(canvas);
+        namedWindow("Map", WINDOW_NORMAL);
+        imshow("Map", canvas);
+
+        if (waitKey() == 'q') break;
     }
-    namedWindow("Detections", WINDOW_NORMAL);
-    imshow("Detections", canvas);
-
-    for (const auto &fc : frameCircles)
-    {
-        const auto coords = _localizer.localize(
-            fc.ellipse.center,
-            frameTelemetry.telemetry,
-            frameTelemetry.camera
-        );
-
-        CircleMap::Circle mc = {
-            coords
-        };
-
-        _map.push(mc);
-    }
-
-    cout << "Circles on map: " << _map.getAll().size() << endl;
-
-    canvas = Mat::zeros(1024, 1024, CV_8UC1);
-    _map.draw(canvas);
-    namedWindow("Map", WINDOW_NORMAL);
-    imshow("Map", canvas);
-
-    waitKey();
 }
