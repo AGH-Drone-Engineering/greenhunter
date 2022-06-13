@@ -18,4 +18,4 @@ target_include_directories(${TARGET} PUBLIC inc)
 target_link_libraries(${TARGET} ${DEPS})
 
 add_executable(${TARGET}_main main.cpp)
-target_link_libraries(${TARGET}_main PRIVATE ${TARGET})
+target_link_libraries(${TARGET}_main PRIVATE ${TARGET} Boost::thread)
