@@ -4,10 +4,12 @@
 #include <opencv2/core.hpp>
 
 #include "Telemetry.h"
+#include "CameraParams.h"
 
 struct FrameTelemetry
 {
     cv::Mat frame;
+    CameraParams camera;
     Telemetry telemetry;
 };
 

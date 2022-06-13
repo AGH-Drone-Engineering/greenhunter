@@ -1,26 +1,25 @@
 #ifndef GREENHUNTER_DRONE_H
 #define GREENHUNTER_DRONE_H
 
+#include <boost/asio.hpp>
+
 #include "FrameTelemetry.h"
+#include "TelemetryServer.h"
 
 class Drone
 {
 public:
-    struct CameraParams
+    struct Params
     {
-        double fov_h;
-        double fov_v;
-
-        int frame_width;
-        int frame_height;
+        short telem_port = 6868;
     };
+
+    Drone(boost::asio::io_context &io_context, const Params &params);
 
     FrameTelemetry getFrameWithTelemetry();
 
-    CameraParams getCameraParams();
-
 private:
-
+    TelemetryServer _telem_server;
 };
 
 #endif

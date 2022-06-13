@@ -1,6 +1,8 @@
 #ifndef GREENHUNTER_SCOUT_H
 #define GREENHUNTER_SCOUT_H
 
+#include <boost/asio.hpp>
+
 #include "Drone.h"
 #include "CircleDetector.h"
 #include "MapLocalizer.h"
@@ -9,6 +11,13 @@
 class Scout
 {
 public:
+    struct Params
+    {
+        Drone::Params drone_params;
+    };
+
+    Scout(boost::asio::io_context &io_context, const Params &params);
+
     void run();
 
 private:

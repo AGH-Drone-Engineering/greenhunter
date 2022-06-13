@@ -7,10 +7,10 @@ using namespace cv;
 
 static constexpr double R_EARTH = 6371000;
 
-MapLocalizer::Coords MapLocalizer::localize(const Point &frame_point, const Telemetry &telemetry)
+MapLocalizer::Coords MapLocalizer::localize(const Point &frame_point,
+                                            const Telemetry &telemetry,
+                                            const CameraParams &camera_params)
 {
-    auto camera_params = _drone.getCameraParams();
-
     double ground_width = 2 * telemetry.alt * tan(camera_params.fov_h * 0.5 * M_PI / 180);
     double ground_height = 2 * telemetry.alt * tan(camera_params.fov_v * 0.5 * M_PI / 180);
 

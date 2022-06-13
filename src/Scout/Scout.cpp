@@ -16,6 +16,10 @@ static constexpr MapLocalizer::Coords MAP_BOTTOM_RIGHT = {
     50.092809, 19.818925
 };
 
+Scout::Scout(boost::asio::io_context &io_context, const Params &params)
+    : _drone(io_context, params.drone_params)
+{}
+
 void Scout::run()
 {
     auto frameTelemetry = _drone.getFrameWithTelemetry();
@@ -45,7 +49,8 @@ void Scout::run()
     {
         const auto coords = _localizer.localize(
             fc.ellipse.center,
-            frameTelemetry.telemetry
+            frameTelemetry.telemetry,
+            frameTelemetry.camera
         );
 
         CircleMap::Circle mc = {

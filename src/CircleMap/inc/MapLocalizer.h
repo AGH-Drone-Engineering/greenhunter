@@ -4,7 +4,7 @@
 #include <opencv2/core.hpp>
 
 #include "Telemetry.h"
-#include "Drone.h"
+#include "CameraParams.h"
 
 class MapLocalizer
 {
@@ -15,10 +15,12 @@ public:
         double lng;
     };
 
-    Coords localize(const cv::Point &frame_point, const Telemetry &telemetry);
+    Coords localize(const cv::Point &frame_point,
+                    const Telemetry &telemetry,
+                    const CameraParams &camera_params);
 
 private:
-    Drone _drone;
+
 };
 
 #endif

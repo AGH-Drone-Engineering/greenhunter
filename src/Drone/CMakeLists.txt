@@ -4,7 +4,10 @@ set(SRCS
     inc/Drone.h
     inc/Telemetry.h
     inc/FrameTelemetry.h
+    inc/CameraParams.h
+    inc/TelemetryServer.h
     Drone.cpp
+    TelemetryServer.cpp
 )
 
 set(DEPS

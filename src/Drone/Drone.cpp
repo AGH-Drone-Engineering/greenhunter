@@ -4,9 +4,15 @@
 
 using namespace cv;
 
+Drone::Drone(boost::asio::io_context &io_context, const Params &params)
+    : _telem_server(io_context, params.telem_port)
+{}
+
 FrameTelemetry Drone::getFrameWithTelemetry()
 {
     Mat frame = imread("data/im7.jpeg");
+    frame = frame(Rect(0, 0, frame.size().height, frame.size().height));
+
     Telemetry telemetry = {
         0,
         0,
@@ -16,19 +22,16 @@ FrameTelemetry Drone::getFrameWithTelemetry()
         19.818654
     };
 
-    return {
-        frame,
-        telemetry
-    };
-}
-
-Drone::CameraParams Drone::getCameraParams()
-{
-    Mat frame = imread("data/im7.jpeg");
-    return {
+    CameraParams camera = {
         60,
         60. * frame.size().height / frame.size().width,
         frame.size().width,
         frame.size().height
+    };
+
+    return {
+        frame,
+        camera,
+        telemetry
     };
 }
