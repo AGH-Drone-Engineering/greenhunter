@@ -13,6 +13,7 @@ set(SRCS
 set(DEPS
     PUBLIC
     ${OpenCV_LIBS}
+    Boost::boost
     Boost::thread
 )
 
