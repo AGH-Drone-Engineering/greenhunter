@@ -182,7 +182,11 @@ void CircleMap::draw(cv::InputOutputArray canvas)
             canvas,
             px,
             0.5 * px_per_m,
-            cv::Scalar::all(255),
+            c.color == CircleColor::Brown
+                ? cv::Scalar(69, 109, 146) :
+            c.color == CircleColor::Gold
+                ? cv::Scalar(69, 205, 255)
+                : cv::Scalar(216, 244, 233),
             cv::FILLED
         );
     }
