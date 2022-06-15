@@ -8,36 +8,53 @@ namespace bg = boost::geometry;
 typedef bg::formula::vincenty_inverse<double, true, true> vin_inv;
 typedef bg::formula::vincenty_direct<double, true> vin_dir;
 
-typedef MapLocalizer::Coords Coords;
-
 using namespace std;
 using namespace cv;
 
-void CircleMap::push(const Circle &circle)
+void CircleMap::push(const CircleOnMap &circle)
 {
-    _circles.push_back(circle);
+    _clusters.push_back({
+        circle.position,
+        0,
+        0,
+        0,
+    });
 }
 
-const std::vector<CircleMap::Circle>& CircleMap::getAll()
+std::vector<CircleOnMap> CircleMap::getAll()
 {
-    return _circles;
+    vector<CircleOnMap> out;
+    transform(
+        _clusters.cbegin(),
+        _clusters.cend(),
+        back_inserter(out),
+        [] (const CircleCluster &c) {
+            return CircleOnMap({
+                CircleColor::Brown,
+                c.position
+            });
+        }
+    );
+    return out;
 }
 
 void CircleMap::draw(InputOutputArray canvas)
 {
-    if (_circles.empty()) return;
+    const auto circles = getAll();
 
-    double lon_min = _circles[0].coords.get<0>();
-    double lat_min = _circles[0].coords.get<1>();
+    if (circles.empty()) return;
+
+    double lon_min = circles[0].position.get<0>();
+    double lat_min = circles[0].position.get<1>();
     double lon_max = lon_min;
     double lat_max = lat_min;
 
-    for (const auto &c : _circles)
+    for (const auto &c : circles)
     {
-        lon_min = min(lon_min, c.coords.get<0>());
-        lon_max = max(lon_max, c.coords.get<0>());
-        lat_min = min(lat_min, c.coords.get<1>());
-        lat_max = max(lat_max, c.coords.get<1>());
+        lon_min = min(lon_min, c.position.get<0>());
+        lon_max = max(lon_max, c.position.get<0>());
+        lat_min = min(lat_min, c.position.get<1>());
+        lat_max = max(lat_max, c.position.get<1>());
     }
 
     auto bottom_left_offset = vin_dir::apply(
@@ -67,25 +84,25 @@ void CircleMap::draw(InputOutputArray canvas)
 
     double px_per_m_x = canvas.size().width /
         bg::distance(
-            Coords(lon_min, lat_center),
-            Coords(lon_max, lat_center)
+            LatLon(lon_min, lat_center),
+            LatLon(lon_max, lat_center)
         );
 
     double px_per_m_y = canvas.size().height /
         bg::distance(
-            Coords(lon_center, lat_min),
-            Coords(lon_center, lat_max)
+            LatLon(lon_center, lat_min),
+            LatLon(lon_center, lat_max)
         );
 
     double px_per_m = min(px_per_m_x, px_per_m_y);
 
-    for (const auto &c : _circles)
+    for (const auto &c : circles)
     {
         auto res = vin_inv::apply(
             lon_min,
             lat_min,
-            c.coords.get<0>(),
-            c.coords.get<1>(),
+            c.position.get<0>(),
+            c.position.get<1>(),
             bg::srs::spheroid<double>()
         );
 

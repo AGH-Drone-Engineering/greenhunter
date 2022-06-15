@@ -28,15 +28,15 @@ void Scout::run()
         for (const auto &c : frameCircles)
         {
             ellipse(canvas, c.ellipse, Scalar(0, 0, 255), 2);
-            switch (c.type)
+            switch (c.color)
             {
-                case CircleDetector::CircleType::Brown:
+                case CircleColor::Brown:
                     putText(canvas, "Brown", c.ellipse.boundingRect().tl(), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255));
                     break;
-                case CircleDetector::CircleType::Gold:
+                case CircleColor::Gold:
                     putText(canvas, "Gold", c.ellipse.boundingRect().tl(), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255));
                     break;
-                case CircleDetector::CircleType::Beige:
+                case CircleColor::Beige:
                     putText(canvas, "Beige", c.ellipse.boundingRect().tl(), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255));
                     break;
             }
@@ -44,20 +44,16 @@ void Scout::run()
         namedWindow("Detections", WINDOW_NORMAL);
         imshow("Detections", canvas);
 
-        for (const auto &fc : frameCircles)
-        {
-            const auto coords = _localizer.localize(
-                fc.ellipse.center,
-                frameTelemetry.telemetry,
-                frameTelemetry.camera
-            );
-
-            CircleMap::Circle mc = {
-                coords
-            };
-
-            _map.push(mc);
-        }
+        std::for_each(
+            frameCircles.cbegin(),
+            frameCircles.cend(),
+            [&] (const CircleOnFrame &c) {
+                _map.push(_localizer.localize(c,
+                    frameTelemetry.telemetry,
+                    frameTelemetry.camera
+                ));
+            }
+        );
 
         cout << "Circles on map: " << _map.getAll().size() << endl;
 

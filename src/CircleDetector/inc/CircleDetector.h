@@ -4,6 +4,8 @@
 #include <opencv2/core.hpp>
 #include <vector>
 
+#include "Circle.h"
+
 class CircleDetector
 {
 public:
@@ -28,20 +30,7 @@ public:
         cv::Scalar beige = {51.81818181818184 / 360. * 255., 0.0883534136546185 * 255., 0.9764705882352941 * 255.};
     };
 
-    enum class CircleType
-    {
-        Brown,
-        Gold,
-        Beige,
-    };
-
-    struct Circle
-    {
-        CircleType type;
-        cv::RotatedRect ellipse;
-    };
-
-    std::vector<Circle> detectCircles(cv::InputArray src);
+    std::vector<CircleOnFrame> detectCircles(cv::InputArray src);
 
 private:
 

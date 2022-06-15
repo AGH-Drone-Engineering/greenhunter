@@ -5,7 +5,7 @@
 using namespace cv;
 using namespace std;
 
-vector<CircleDetector::Circle> CircleDetector::detectCircles(InputArray src)
+vector<CircleOnFrame> CircleDetector::detectCircles(InputArray src)
 {
     Mat img;
 
@@ -32,7 +32,7 @@ vector<CircleDetector::Circle> CircleDetector::detectCircles(InputArray src)
     vector<Vec4i> hier;
     findContours(edges, cnts, hier, RETR_TREE, CHAIN_APPROX_SIMPLE);
 
-    vector<Circle> circles;
+    vector<CircleOnFrame> circles;
 
     for (int i = 0; i < cnts.size(); ++i)
     {
@@ -109,11 +109,11 @@ vector<CircleDetector::Circle> CircleDetector::detectCircles(InputArray src)
         double err_beige_mean = mean(err_beige)[0];
 
         if (err_brown_mean <= err_gold_mean && err_gold_mean <= err_beige_mean)
-            circles.push_back({CircleType::Brown, obj});
+            circles.push_back({CircleColor::Brown, obj});
         else if (err_gold_mean <= err_brown_mean && err_brown_mean <= err_beige_mean)
-            circles.push_back({CircleType::Gold, obj});
+            circles.push_back({CircleColor::Gold, obj});
         else
-            circles.push_back({CircleType::Beige, obj});
+            circles.push_back({CircleColor::Beige, obj});
     }
 
     return circles;

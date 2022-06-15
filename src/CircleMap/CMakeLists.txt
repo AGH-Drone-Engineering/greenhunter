@@ -15,6 +15,7 @@ set(DEPS
     Boost::boost
     Boost::thread
     Drone
+    CircleDetector
 )
 
 add_library(${TARGET} STATIC ${SRCS})

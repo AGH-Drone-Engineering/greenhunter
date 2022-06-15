@@ -2,27 +2,32 @@
 #define GREENHUNTER_CIRCLE_MAP_H
 
 #include <vector>
-
 #include <opencv2/core.hpp>
 
 #include "MapLocalizer.h"
+#include "Circle.h"
 
 class CircleMap
 {
 public:
-    struct Circle
+    typedef CircleOnMap::LatLon LatLon;
+
+    struct CircleCluster
     {
-        MapLocalizer::Coords coords;
+        LatLon position;
+        int brown_votes;
+        int gold_votes;
+        int beige_votes;
     };
 
-    void push(const Circle &circle);
+    void push(const CircleOnMap &circle);
 
-    const std::vector<Circle>& getAll();
+    std::vector<CircleOnMap> getAll();
 
     void draw(cv::InputOutputArray canvas);
 
 private:
-    std::vector<Circle> _circles;
+    std::vector<CircleCluster> _clusters;
 };
 
 #endif

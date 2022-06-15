@@ -72,7 +72,7 @@ void MapServer::Connection::startWrite()
     msg.precision(15);
     for (const auto &c : _map.getAll())
     {
-        msg << c.coords.get<0>() << "," << c.coords.get<1>() << "\n";
+        msg << c.position.get<0>() << "," << c.position.get<1>() << "\n";
     }
     msg.flush();
     boost::asio::async_write(

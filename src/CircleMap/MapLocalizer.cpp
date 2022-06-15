@@ -6,10 +6,12 @@
 namespace bg = boost::geometry;
 typedef bg::formula::vincenty_direct<double, true> vincenty;
 
-MapLocalizer::Coords MapLocalizer::localize(const cv::Point &frame_point,
-                                            const Telemetry &telemetry,
-                                            const CameraParams &camera_params)
+CircleOnMap MapLocalizer::localize(const CircleOnFrame &circle,
+                                   const Telemetry &telemetry,
+                                   const CameraParams &camera_params)
 {
+    const auto &frame_point = circle.ellipse.center;
+
     double ground_width = 2. * telemetry.altitude * tan(camera_params.fov_h * 0.5);
     double ground_height = 2. * telemetry.altitude * tan(camera_params.fov_v * 0.5);
 
@@ -27,5 +29,8 @@ MapLocalizer::Coords MapLocalizer::localize(const cv::Point &frame_point,
         bg::srs::spheroid<double>()
     );
 
-    return {res.lon2, res.lat2};
+    return {
+        circle.color,
+        {res.lon2, res.lat2},
+    };
 }

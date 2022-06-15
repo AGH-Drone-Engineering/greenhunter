@@ -18,15 +18,15 @@ int main(int argc, char **argv)
     for (const auto &c : circles)
     {
         ellipse(img, c.ellipse, Scalar(0, 0, 255), 2);
-        switch (c.type)
+        switch (c.color)
         {
-            case CircleDetector::CircleType::Brown:
+            case CircleColor::Brown:
                 putText(img, "Brown", c.ellipse.boundingRect().tl(), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255));
                 break;
-            case CircleDetector::CircleType::Gold:
+            case CircleColor::Gold:
                 putText(img, "Gold", c.ellipse.boundingRect().tl(), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255));
                 break;
-            case CircleDetector::CircleType::Beige:
+            case CircleColor::Beige:
                 putText(img, "Beige", c.ellipse.boundingRect().tl(), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255));
                 break;
         }
