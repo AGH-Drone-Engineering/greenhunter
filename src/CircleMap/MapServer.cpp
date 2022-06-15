@@ -72,7 +72,14 @@ void MapServer::Connection::startWrite()
     msg.precision(15);
     for (const auto &c : _map.getAll())
     {
-        msg << c.position.get<0>() << "," << c.position.get<1>() << "\n";
+        msg << c.position.get<0>() << ","
+            << c.position.get<1>() << ","
+            << (c.color == CircleColor::Brown
+                    ? "BROWN" :
+                c.color == CircleColor::Gold
+                    ? "GOLD"
+                    : "BEIGE")
+            << "\n";
     }
     msg.flush();
     boost::asio::async_write(
