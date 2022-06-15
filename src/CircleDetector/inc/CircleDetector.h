@@ -18,8 +18,8 @@ public:
         int closeSize = 9;
         int closeIters = 1;
 
-        double predSizeMin = 10;
-        double predAreaMin = 200;
+        double predSizeMin = 35;
+        double predAreaMin = 962;
         double predCircularityMin = 0.7;
         double predConvexityMin = 0.9;
 
