@@ -12,6 +12,11 @@ class CircleMap
 public:
     typedef CircleOnMap::LatLon LatLon;
 
+    struct Params
+    {
+        double clustering_distance = 2.;
+    };
+
     struct CircleCluster
     {
         LatLon position;
@@ -20,6 +25,8 @@ public:
         int beige_votes;
     };
 
+    explicit CircleMap(const Params &params);
+
     void push(const CircleOnMap &circle);
 
     std::vector<CircleOnMap> getAll();
@@ -27,6 +34,7 @@ public:
     void draw(cv::InputOutputArray canvas);
 
 private:
+    Params _params;
     std::vector<CircleCluster> _clusters;
 };
 

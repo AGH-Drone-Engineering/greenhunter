@@ -9,7 +9,8 @@ using namespace std;
 using namespace cv;
 
 Scout::Scout(boost::asio::io_context &io_context, const Params &params)
-    : _drone(io_context, params.drone_params)
+    : _drone(io_context, params.drone)
+    , _map(params.map)
     , _map_server(io_context, _map, params.map_port)
 {}
 

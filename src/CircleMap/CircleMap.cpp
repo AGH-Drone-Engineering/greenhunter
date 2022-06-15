@@ -8,29 +8,91 @@ namespace bg = boost::geometry;
 typedef bg::formula::vincenty_inverse<double, true, true> vin_inv;
 typedef bg::formula::vincenty_direct<double, true> vin_dir;
 
-using namespace std;
-using namespace cv;
+void mergeClusters(CircleMap::CircleCluster &c1,
+                   const CircleMap::CircleCluster &c2)
+{
+    auto &p1 = c1.position;
+    auto p2 = c2.position;
+
+    bg::multiply_value(p1,
+       c1.brown_votes + c1.gold_votes + c1.beige_votes);
+    bg::multiply_value(p2,
+       c2.brown_votes + c2.gold_votes + c2.beige_votes);
+
+    bg::add_point(p1, p2);
+
+    bg::divide_value(
+        p1,
+        c1.brown_votes +
+        c1.gold_votes +
+        c1.beige_votes +
+        c2.brown_votes +
+        c2.gold_votes +
+        c2.beige_votes
+    );
+
+    c1.brown_votes += c2.brown_votes;
+    c1.gold_votes += c2.gold_votes;
+    c1.beige_votes += c2.beige_votes;
+}
+
+CircleMap::CircleMap(const Params &params)
+    : _params(params)
+{
+
+}
 
 void CircleMap::push(const CircleOnMap &circle)
 {
-    _clusters.push_back({
+    std::vector<CircleCluster> to_merge;
+    std::vector<CircleCluster> others;
+
+    for (const auto &clust : _clusters)
+    {
+        if (bg::distance(
+                circle.position,
+                clust.position
+            ) > _params.clustering_distance)
+        {
+            others.push_back(clust);
+        }
+        else
+        {
+            to_merge.push_back(clust);
+        }
+    }
+
+    CircleCluster merged {
         circle.position,
-        0,
-        0,
-        0,
-    });
+        circle.color == CircleColor::Brown ? 1 : 0,
+        circle.color == CircleColor::Gold ? 1 : 0,
+        circle.color == CircleColor::Beige ? 1 : 0,
+    };
+
+    for (const auto &c : to_merge)
+    {
+        mergeClusters(merged, c);
+    }
+
+    others.push_back(merged);
+
+    _clusters = std::move(others);
 }
 
 std::vector<CircleOnMap> CircleMap::getAll()
 {
-    vector<CircleOnMap> out;
-    transform(
+    std::vector<CircleOnMap> out;
+    std::transform(
         _clusters.cbegin(),
         _clusters.cend(),
-        back_inserter(out),
+        std::back_inserter(out),
         [] (const CircleCluster &c) {
             return CircleOnMap({
-                CircleColor::Brown,
+                (c.brown_votes >= c.gold_votes && c.brown_votes >= c.beige_votes)
+                    ? CircleColor::Brown :
+                (c.gold_votes >= c.brown_votes && c.gold_votes >= c.beige_votes)
+                    ? CircleColor::Gold
+                    : CircleColor::Beige,
                 c.position
             });
         }
@@ -38,7 +100,7 @@ std::vector<CircleOnMap> CircleMap::getAll()
     return out;
 }
 
-void CircleMap::draw(InputOutputArray canvas)
+void CircleMap::draw(cv::InputOutputArray canvas)
 {
     const auto circles = getAll();
 
@@ -51,10 +113,10 @@ void CircleMap::draw(InputOutputArray canvas)
 
     for (const auto &c : circles)
     {
-        lon_min = min(lon_min, c.position.get<0>());
-        lon_max = max(lon_max, c.position.get<0>());
-        lat_min = min(lat_min, c.position.get<1>());
-        lat_max = max(lat_max, c.position.get<1>());
+        lon_min = std::min(lon_min, c.position.get<0>());
+        lon_max = std::max(lon_max, c.position.get<0>());
+        lat_min = std::min(lat_min, c.position.get<1>());
+        lat_max = std::max(lat_max, c.position.get<1>());
     }
 
     auto bottom_left_offset = vin_dir::apply(
@@ -94,7 +156,7 @@ void CircleMap::draw(InputOutputArray canvas)
             LatLon(lon_center, lat_max)
         );
 
-    double px_per_m = min(px_per_m_x, px_per_m_y);
+    double px_per_m = std::min(px_per_m_x, px_per_m_y);
 
     for (const auto &c : circles)
     {
@@ -111,7 +173,7 @@ void CircleMap::draw(InputOutputArray canvas)
         double xm = res.distance * cos(ang);
         double ym = res.distance * sin(ang);
 
-        Point px(
+        cv::Point px(
             xm * px_per_m,
             canvas.size().height - ym * px_per_m
         );
@@ -120,8 +182,8 @@ void CircleMap::draw(InputOutputArray canvas)
             canvas,
             px,
             0.5 * px_per_m,
-            Scalar::all(255),
-            FILLED
+            cv::Scalar::all(255),
+            cv::FILLED
         );
     }
 }

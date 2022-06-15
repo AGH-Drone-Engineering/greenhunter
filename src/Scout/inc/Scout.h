@@ -14,7 +14,8 @@ class Scout
 public:
     struct Params
     {
-        Drone::Params drone_params;
+        Drone::Params drone;
+        CircleMap::Params map;
         short map_port = 6869;
     };
 
