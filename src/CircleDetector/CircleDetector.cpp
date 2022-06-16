@@ -5,7 +5,7 @@
 using namespace cv;
 using namespace std;
 
-vector<CircleOnFrame> CircleDetector::detectCircles(InputArray src)
+vector<CircleOnFrame> CircleDetector::detectCircles(InputArray src) const
 {
     Mat img;
 

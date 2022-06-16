@@ -13,7 +13,7 @@ class MapLocalizer
 public:
     CircleOnMap localize(const CircleOnFrame &circle,
                          const Telemetry &telemetry,
-                         const CameraParams &camera_params);
+                         const CameraParams &camera_params) const;
 
 private:
 

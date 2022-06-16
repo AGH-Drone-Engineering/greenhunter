@@ -8,8 +8,8 @@ namespace bg = boost::geometry;
 typedef bg::formula::vincenty_inverse<double, true, true> vin_inv;
 typedef bg::formula::vincenty_direct<double, true> vin_dir;
 
-void mergeClusters(CircleMap::CircleCluster &c1,
-                   const CircleMap::CircleCluster &c2)
+static void mergeClusters(CircleMap::CircleCluster &c1,
+                          const CircleMap::CircleCluster &c2)
 {
     auto &p1 = c1.position;
     auto p2 = c2.position;
@@ -44,6 +44,8 @@ CircleMap::CircleMap(const Params &params)
 
 void CircleMap::push(const CircleOnMap &circle)
 {
+    boost::lock_guard guard(_mtx);
+
     std::vector<CircleCluster> to_merge;
     std::vector<CircleCluster> others;
 
@@ -81,6 +83,7 @@ void CircleMap::push(const CircleOnMap &circle)
 
 std::vector<CircleOnMap> CircleMap::getAll()
 {
+    boost::lock_guard guard(_mtx);
     std::vector<CircleOnMap> out;
     std::transform(
         _clusters.cbegin(),

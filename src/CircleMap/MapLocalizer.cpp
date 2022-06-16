@@ -8,7 +8,7 @@ typedef bg::formula::vincenty_direct<double, true> vincenty;
 
 CircleOnMap MapLocalizer::localize(const CircleOnFrame &circle,
                                    const Telemetry &telemetry,
-                                   const CameraParams &camera_params)
+                                   const CameraParams &camera_params) const
 {
     const auto &frame_point = circle.ellipse.center;
 

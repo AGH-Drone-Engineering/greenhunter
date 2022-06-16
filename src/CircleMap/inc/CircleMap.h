@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <opencv2/core.hpp>
+#include <boost/thread.hpp>
 
 #include "MapLocalizer.h"
 #include "Circle.h"
@@ -36,6 +37,7 @@ public:
 private:
     Params _params;
     std::vector<CircleCluster> _clusters;
+    boost::mutex _mtx;
 };
 
 #endif

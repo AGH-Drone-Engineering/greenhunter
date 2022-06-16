@@ -30,7 +30,7 @@ public:
         cv::Scalar beige = {51.81818181818184 / 360. * 255., 0.0883534136546185 * 255., 0.9764705882352941 * 255.};
     };
 
-    std::vector<CircleOnFrame> detectCircles(cv::InputArray src);
+    std::vector<CircleOnFrame> detectCircles(cv::InputArray src) const;
 
 private:
 
