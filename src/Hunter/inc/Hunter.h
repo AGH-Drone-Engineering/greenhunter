@@ -3,21 +3,24 @@
 
 #include <boost/asio.hpp>
 
+#include "MapClient.h"
+
 class Hunter
 {
 public:
     struct Params
     {
-
+        MapClient::Params map;
     };
 
-    Hunter(boost::asio::io_context &io_context,
+    Hunter(boost::asio::io_context &context,
            const Params &params);
-
-    void run();
 
 private:
 
+    void onMapUpdate(const std::vector<CircleOnMap> &circles);
+
+    MapClient _map;
 };
 
 #endif
