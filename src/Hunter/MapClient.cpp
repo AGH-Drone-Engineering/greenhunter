@@ -18,46 +18,52 @@ MapClient::MapClient(ba::io_context &context,
                      const MapClient::Params &params)
     : _params(params)
     , _update_callback(std::move(update_callback))
-    , _timer(context, ba::chrono::milliseconds(params.update_delay_ms))
+    , _timer(context, ba::chrono::steady_clock::now())
     , _resolver(context)
     , _socket(context)
 {
+    queryMapAsync();
+}
+
+void MapClient::queryMapAsync()
+{
     _resolver.async_resolve(
-        params.server,
-        params.port,
+        _params.server,
+        _params.port,
         std::bind(&MapClient::handleResolve, this, _1, _2)
+    );
+}
+
+void MapClient::queryMapLaterAsync()
+{
+    _timer.expires_at(
+        _timer.expiry() +
+        ba::chrono::milliseconds(_params.update_delay_ms)
+    );
+
+    _timer.async_wait(
+        [this]
+        (const error_code &err)
+        {
+            queryMapAsync();
+        }
     );
 }
 
 void
 MapClient::handleResolve(const error_code &err,
-                         tcp::resolver::results_type results)
+                         const tcp::resolver::results_type &results)
 {
     if (err)
     {
-        cerr << "Resolution error: " << err.message() << endl;
-        return;
-    }
-
-    _endpoints = std::move(results);
-
-    _timer.async_wait(
-        std::bind(&MapClient::handleTimer, this, _1)
-    );
-}
-
-void
-MapClient::handleTimer(const error_code &err)
-{
-    if (err)
-    {
-        cerr << "Timer error: " << err.message() << endl;
+        cerr << "[MapClient] Resolution error: " << err.message() << endl;
+        queryMapLaterAsync();
         return;
     }
 
     ba::async_connect(
         _socket,
-        _endpoints,
+        results,
         std::bind(&MapClient::handleConnect, this, _1, _2)
     );
 }
@@ -68,7 +74,8 @@ MapClient::handleConnect(const error_code &err,
 {
     if (err)
     {
-        cerr << "Connection error: " << err.message() << endl;
+        cerr << "[MapClient] Connection error: " << err.message() << endl;
+        queryMapLaterAsync();
         return;
     }
 
@@ -89,16 +96,7 @@ MapClient::handleRead(const error_code &err,
     if (err)
     {
         _update_callback(_circles);
-
-        _timer.expires_at(
-            _timer.expiry() +
-            ba::chrono::milliseconds(_params.update_delay_ms)
-        );
-
-        _timer.async_wait(
-            std::bind(&MapClient::handleTimer, this, _1)
-        );
-
+        queryMapLaterAsync();
         return;
     }
 
