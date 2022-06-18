@@ -5,13 +5,25 @@
 
 using namespace cv;
 
-Drone::Drone(boost::asio::io_context &io_context, const Params &params)
+Drone::Drone(boost::asio::io_context &io_context,
+             const std::string &camera,
+             const Params &params)
     : _telem_server(io_context, params.telem_port)
+    , _cap(camera)
+{}
+
+Drone::Drone(boost::asio::io_context &io_context,
+             int camera,
+             const Params &params)
+    : _telem_server(io_context, params.telem_port)
+    , _cap(camera)
 {}
 
 cv::Mat Drone::getFrame()
 {
-    return imread("data/im7.jpeg");
+    Mat img;
+    _cap.read(img);
+    return img;
 }
 
 boost::optional<Telemetry> Drone::getTelemetry()

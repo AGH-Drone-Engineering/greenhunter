@@ -3,6 +3,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/optional.hpp>
+#include <opencv2/videoio.hpp>
 
 #include "FrameTelemetry.h"
 #include "TelemetryServer.h"
@@ -15,7 +16,13 @@ public:
         short telem_port = 6868;
     };
 
-    Drone(boost::asio::io_context &io_context, const Params &params);
+    Drone(boost::asio::io_context &io_context,
+          const std::string &camera,
+          const Params &params);
+
+    Drone(boost::asio::io_context &io_context,
+          int camera,
+          const Params &params);
 
     cv::Mat getFrame();
 
@@ -27,6 +34,7 @@ public:
 
 private:
     TelemetryServer _telem_server;
+    cv::VideoCapture _cap;
 };
 
 #endif

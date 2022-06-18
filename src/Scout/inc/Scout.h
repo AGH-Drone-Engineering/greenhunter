@@ -19,7 +19,13 @@ public:
         short map_port = 6869;
     };
 
-    Scout(boost::asio::io_context &io_context, const Params &params);
+    Scout(boost::asio::io_context &io_context,
+          const std::string &camera,
+          const Params &params);
+
+    Scout(boost::asio::io_context &io_context,
+          int camera,
+          const Params &params);
 
     void run();
 

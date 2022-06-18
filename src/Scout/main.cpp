@@ -1,18 +1,28 @@
 #include <iostream>
 #include <boost/asio.hpp>
-#include <boost/bind/bind.hpp>
-#include <boost/thread.hpp>
+#include <boost/thread/scoped_thread.hpp>
 
 #include "Scout.h"
 
+namespace b = boost;
+namespace ba = b::asio;
+
 int main(int argc, char **argv)
 {
-    boost::asio::io_context io_context;
-    boost::asio::executor_work_guard<boost::asio::io_context::executor_type>
-        work = boost::asio::make_work_guard(io_context);
-    boost::thread io_thread(boost::bind(&boost::asio::io_context::run, &io_context));
+    ba::io_context io_context;
 
-    Scout scout(io_context, {});
+    ba::executor_work_guard<ba::io_context::executor_type>
+        work = ba::make_work_guard(io_context);
+
+    b::strict_scoped_thread<> io_thread(b::thread(
+        [&] { io_context.run(); }
+    ));
+
+    Scout scout(
+        io_context,
+        0,
+        {}
+    );
 
     try
     {
@@ -23,8 +33,7 @@ int main(int argc, char **argv)
         std::cerr << "Error: " << ex.what() << std::endl;
     }
 
-    io_context.stop();
-    io_thread.join();
+    work.reset();
 
     return 0;
 }

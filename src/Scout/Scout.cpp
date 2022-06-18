@@ -8,8 +8,18 @@
 using namespace std;
 using namespace cv;
 
-Scout::Scout(boost::asio::io_context &io_context, const Params &params)
-    : _drone(io_context, params.drone)
+Scout::Scout(boost::asio::io_context &io_context,
+             const string &camera,
+             const Params &params)
+    : _drone(io_context, camera, params.drone)
+    , _map(params.map)
+    , _map_server(io_context, _map, params.map_port)
+{}
+
+Scout::Scout(boost::asio::io_context &io_context,
+             int camera,
+             const Params &params)
+    : _drone(io_context, camera, params.drone)
     , _map(params.map)
     , _map_server(io_context, _map, params.map_port)
 {}
