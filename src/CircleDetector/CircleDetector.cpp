@@ -9,9 +9,11 @@ vector<CircleOnFrame> CircleDetector::detectCircles(InputArray src) const
 {
     Mat img;
 
-    for (int i = 0; i < _config.medianIters; ++i)
+    medianBlur(src, img, _config.medianSize);
+
+    for (int i = 0; i < _config.medianIters - 1; ++i)
     {
-        medianBlur(src, img, _config.medianSize);
+        medianBlur(img, img, _config.medianSize);
     }
 
     Mat edges;

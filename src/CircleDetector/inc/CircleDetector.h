@@ -12,7 +12,7 @@ public:
     struct Config
     {
         int medianSize = 5;
-        int medianIters = 10;
+        int medianIters = 2;
 
         double cannyTh1 = 150;
         double cannyTh2 = 200;
