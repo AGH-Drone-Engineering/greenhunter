@@ -6,6 +6,7 @@
 using std::cout;
 using std::endl;
 using namespace std::placeholders;
+typedef CircleOnMap::LatLon LatLon;
 
 namespace b = boost;
 namespace ba = boost::asio;
@@ -15,6 +16,11 @@ Hunter::Hunter(ba::io_context &context,
     : _map(context,
            std::bind(&Hunter::onMapUpdate, this, _1),
            params.map)
+    , _mav(context,
+           [] (const LatLon&) {},
+           [] {},
+           [] (const LatLon&) {},
+           params.mav)
 {
 
 }
