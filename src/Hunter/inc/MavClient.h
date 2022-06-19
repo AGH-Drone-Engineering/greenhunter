@@ -41,6 +41,8 @@ private:
 
     void connectRetryAsync();
 
+    void getPosAsync();
+
     void readAsync();
 
     void handleRead(const boost::system::error_code &err,
@@ -54,6 +56,7 @@ private:
     ShotCallback _on_shot;
     PositionCallback _on_position;
 
+    boost::asio::steady_timer _get_pos_timer;
     boost::asio::steady_timer _retry_timeout;
     boost::asio::ip::tcp::resolver _resolver;
     boost::asio::ip::tcp::socket _socket;

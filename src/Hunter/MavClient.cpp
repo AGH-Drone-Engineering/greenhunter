@@ -22,11 +22,13 @@ MavClient::MavClient(ba::io_context &context,
     , _on_arrived(std::move(on_arrived))
     , _on_shot(std::move(on_shot))
     , _on_position(std::move(on_position))
+    , _get_pos_timer(context)
     , _retry_timeout(context)
     , _resolver(context)
     , _socket(context)
 {
     connectAsync();
+    getPosAsync();
 }
 
 void MavClient::connectRetryAsync()
@@ -211,17 +213,48 @@ void MavClient::sendShoot(const CircleColor &color)
     msg.flush();
 
     ba::async_write(
-            _socket,
-            ba::buffer(msg.str()),
-            []
-            (const error_code &err, size_t count)
+        _socket,
+        ba::buffer(msg.str()),
+        []
+        (const error_code &err, size_t count)
+        {
+            if (err)
             {
-                if (err)
-                {
-                    cerr << "[MavClient] Could not send SHOOT: "
-                         << err.message()
-                         << endl;
-                }
+                cerr << "[MavClient] Could not send SHOOT: "
+                     << err.message()
+                     << endl;
             }
+        }
+    );
+}
+
+void MavClient::getPosAsync()
+{
+    std::string msg = "GETPOS\n";
+    ba::async_write(
+        _socket,
+        ba::buffer(msg),
+        [this]
+        (const error_code &err, size_t count)
+        {
+            if (err)
+            {
+                cerr << "[MavClient] Could not send GETPOS: "
+                     << err.message()
+                     << endl;
+            }
+
+            _get_pos_timer.expires_after(
+                ba::chrono::seconds(1)
+            );
+
+            _get_pos_timer.async_wait(
+                [this]
+                (const error_code &err)
+                {
+                    getPosAsync();
+                }
+            );
+        }
     );
 }
