@@ -125,9 +125,48 @@ MavClient::handleRead(const error_code &err,
     std::string line;
     std::getline(is, line, '\n');
 
-    cout << "[MavClient] Got: "
-         << line
-         << endl;
+    try
+    {
+        handleLine(line);
+    }
+    catch (const std::exception &ex)
+    {
+        cerr << "[MavClient] Error parsing '"
+             << line
+             << "': "
+             << ex.what()
+             << endl;
+    }
 
     readAsync();
+}
+
+void MavClient::handleLine(const std::string &line)
+{
+    if (line == "ACK")
+    {
+        _on_arrived();
+    }
+    else if (line.rfind("POS ", 0) == 0)
+    {
+        size_t i;
+
+        auto lat_str = line.substr(4);
+        double lat = std::stod(lat_str, &i);
+
+        auto lon_str = lat_str.substr(i + 1);
+        double lon = std::stod(lon_str);
+
+        _on_position({
+            lon * b::geometry::math::d2r<double>(),
+            lat * b::geometry::math::d2r<double>(),
+        });
+    }
+    else
+    {
+        cerr << "[MavClient] Unknown packet '"
+             << line
+             << "'"
+             << endl;
+    }
 }

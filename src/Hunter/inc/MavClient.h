@@ -17,7 +17,7 @@ public:
         std::string port = "6867";
     };
 
-    typedef std::function<void (const LatLon&)>
+    typedef std::function<void (void)>
         ArrivedCallback;
 
     typedef std::function<void (void)>
@@ -45,6 +45,8 @@ private:
 
     void handleRead(const boost::system::error_code &err,
                     size_t count);
+
+    void handleLine(const std::string &line);
 
     Params _params;
 

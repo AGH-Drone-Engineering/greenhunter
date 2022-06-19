@@ -17,9 +17,9 @@ Hunter::Hunter(ba::io_context &context,
            std::bind(&Hunter::onMapUpdate, this, _1),
            params.map)
     , _mav(context,
-           [] (const LatLon&) {},
-           [] {},
-           [] (const LatLon&) {},
+           std::bind(&Hunter::onArrived, this),
+           std::bind(&Hunter::onShot, this),
+           std::bind(&Hunter::onPosition, this, _1),
            params.mav)
 {
 
@@ -27,12 +27,29 @@ Hunter::Hunter(ba::io_context &context,
 
 void Hunter::onMapUpdate(const std::vector<CircleOnMap> &circles)
 {
-    cout << "Circles on map:" << endl;
-    for (const auto &c : circles)
-    {
-        cout << c.position.get<0>() << " "
-             << c.position.get<1>() << " "
-             << static_cast<int>(c.color)
-             << endl;
-    }
+    cout << "[Hunter] "
+         << circles.size()
+         << " circles on map"
+         << endl;
+}
+
+void Hunter::onArrived()
+{
+    cout << "[Hunter] Arrived at waypoint"
+         << endl;
+}
+
+void Hunter::onShot()
+{
+    cout << "[Hunter] Shot complete"
+         << endl;
+}
+
+void Hunter::onPosition(const LatLon &pos)
+{
+    cout << "[Hunter] Position: "
+         << pos.get<0>()
+         << " "
+         << pos.get<1>()
+         << endl;
 }

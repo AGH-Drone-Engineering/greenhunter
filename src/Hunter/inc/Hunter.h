@@ -9,6 +9,8 @@
 class Hunter
 {
 public:
+    typedef CircleOnMap::LatLon LatLon;
+
     struct Params
     {
         MapClient::Params map;
@@ -21,6 +23,12 @@ public:
 private:
 
     void onMapUpdate(const std::vector<CircleOnMap> &circles);
+
+    void onArrived();
+
+    void onShot();
+
+    void onPosition(const LatLon &pos);
 
     MapClient _map;
     MavClient _mav;
