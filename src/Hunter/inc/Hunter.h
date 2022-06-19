@@ -28,7 +28,7 @@ private:
 
     void onShot();
 
-    void onPosition(const LatLon &pos);
+    void onPosition(const LatLon &pos, double azi, double alt);
 
     MapClient _map;
     MavClient _mav;

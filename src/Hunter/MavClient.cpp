@@ -157,12 +157,22 @@ void MavClient::handleLine(const std::string &line)
         double lat = std::stod(lat_str, &i);
 
         auto lon_str = lat_str.substr(i + 1);
-        double lon = std::stod(lon_str);
+        double lon = std::stod(lon_str, &i);
 
-        _on_position({
-            lon * b::geometry::math::d2r<double>(),
-            lat * b::geometry::math::d2r<double>(),
-        });
+        auto azi_str = lon_str.substr(i + 1);
+        double azi = std::stod(azi_str, &i);
+
+        auto alt_str = azi_str.substr(i + 1);
+        double alt = std::stod(alt_str, &i);
+
+        _on_position(
+            {
+                lon * b::geometry::math::d2r<double>(),
+                lat * b::geometry::math::d2r<double>(),
+            },
+            azi * b::geometry::math::d2r<double>(),
+            alt
+        );
     }
     else
     {

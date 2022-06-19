@@ -23,7 +23,7 @@ public:
     typedef std::function<void (void)>
         ShotCallback;
 
-    typedef std::function<void (const LatLon&)>
+    typedef std::function<void (const LatLon&, double, double)>
         PositionCallback;
 
     MavClient(boost::asio::io_context &context,

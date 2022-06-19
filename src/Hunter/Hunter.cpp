@@ -19,7 +19,7 @@ Hunter::Hunter(ba::io_context &context,
     , _mav(context,
            std::bind(&Hunter::onArrived, this),
            std::bind(&Hunter::onShot, this),
-           std::bind(&Hunter::onPosition, this, _1),
+           std::bind(&Hunter::onPosition, this, _1, _2, _3),
            params.mav)
 {
 
@@ -45,11 +45,15 @@ void Hunter::onShot()
          << endl;
 }
 
-void Hunter::onPosition(const LatLon &pos)
+void Hunter::onPosition(const LatLon &pos, double azi, double alt)
 {
-    cout << "[Hunter] Position: "
+    cout << "[Hunter] LGHA: "
          << pos.get<0>()
          << " "
          << pos.get<1>()
+         << " "
+         << azi
+         << " "
+         << alt
          << endl;
 }
