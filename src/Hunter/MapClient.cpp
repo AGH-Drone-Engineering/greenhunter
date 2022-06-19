@@ -18,125 +18,138 @@ MapClient::MapClient(ba::io_context &context,
                      const MapClient::Params &params)
     : _params(params)
     , _update_callback(std::move(update_callback))
-    , _timer(context, ba::chrono::steady_clock::now())
+    , _retry_timeout(context)
     , _resolver(context)
     , _socket(context)
 {
-    queryMapAsync();
+    connectAsync();
 }
 
-void MapClient::queryMapAsync()
+void MapClient::connectRetryAsync()
 {
-    _resolver.async_resolve(
-        _params.server,
-        _params.port,
-        std::bind(&MapClient::handleResolve, this, _1, _2)
-    );
-}
-
-void MapClient::queryMapLaterAsync()
-{
-    _timer.expires_at(
-        _timer.expiry() +
-        ba::chrono::milliseconds(_params.update_delay_ms)
+    _retry_timeout.expires_from_now(
+        ba::chrono::seconds(3)
     );
 
-    _timer.async_wait(
+    _retry_timeout.async_wait(
         [this]
         (const error_code &err)
         {
-            queryMapAsync();
+            connectAsync();
         }
     );
 }
 
-void
-MapClient::handleResolve(const error_code &err,
-                         const tcp::resolver::results_type &results)
+void MapClient::connectAsync()
 {
-    if (err)
-    {
-        cerr << "[MapClient] Resolution error: " << err.message() << endl;
-        queryMapLaterAsync();
-        return;
-    }
+    cout << "[MapClient] Connecting" << endl;
 
-    ba::async_connect(
-        _socket,
-        results,
-        std::bind(&MapClient::handleConnect, this, _1, _2)
+    _resolver.async_resolve(
+        _params.server,
+        _params.port,
+        [this]
+        (const error_code &err,
+         const tcp::resolver::results_type &results)
+        {
+            if (err)
+            {
+                cerr << "[MapClient] Resolution error: "
+                     << err.message()
+                     << endl;
+                connectRetryAsync();
+                return;
+            }
+
+            ba::async_connect(
+                _socket,
+                results,
+                [this]
+                (const error_code &err,
+                 const tcp::endpoint &endpoint)
+                {
+                    if (err)
+                    {
+                        cerr << "[MapClient] Connection error: "
+                             << err.message()
+                             << endl;
+                        connectRetryAsync();
+                        return;
+                    }
+
+                    cout << "[MapClient] Connected" << endl;
+
+                    _circles.clear();
+
+                    readAsync();
+                }
+            );
+        }
     );
 }
 
-void
-MapClient::handleConnect(const error_code &err,
-                         const tcp::endpoint &endpoint)
+void MapClient::readAsync()
 {
-    if (err)
-    {
-        cerr << "[MapClient] Connection error: " << err.message() << endl;
-        queryMapLaterAsync();
-        return;
-    }
-
-    _circles.clear();
-
     ba::async_read_until(
         _socket,
         _buf,
         '\n',
-        std::bind(&MapClient::handleRead, this, _1, _2)
-    );
-}
+        [this]
+        (const error_code &err,
+         size_t count)
+        {
+            if (err)
+            {
+                cerr << "[MapClient] Read error: "
+                     << err.message()
+                     << endl;
+                _socket.close();
+                connectRetryAsync();
+                return;
+            }
 
-void
-MapClient::handleRead(const error_code &err,
-                      std::size_t count)
-{
-    if (err)
-    {
-        _update_callback(_circles);
-        queryMapLaterAsync();
-        return;
-    }
+            std::istream is(&_buf);
+            std::string line;
+            std::getline(is, line, '\n');
 
-    std::istream is(&_buf);
-    std::string line;
-    std::getline(is, line, '\n');
-    size_t i, j;
-    double lon = std::stod(line, &i);
-    double lat = std::stod(line.substr(i + 1), &j);
-    std::string color = line.substr(i + j + 2);
-    if (color == "BROWN")
-    {
-        _circles.push_back({
-            CircleColor::Brown,
-            {lon, lat},
-        });
-    }
-    else if (color == "GOLD")
-    {
-        _circles.push_back({
-            CircleColor::Gold,
-            {lon, lat},
-        });
-    }
-    else if (color == "BEIGE")
-    {
-        _circles.push_back({
-            CircleColor::Beige,
-            {lon, lat},
-        });
-    }
-    else
-    {
-        cerr << "Invalid circle color: " << color << endl;
-    }
+            if (line.empty())
+            {
+                _update_callback(_circles);
+                _circles.clear();
+                readAsync();
+                return;
+            }
 
-    ba::async_read_until(
-        _socket,
-        _buf,
-        '\n',
-        std::bind(&MapClient::handleRead, this, _1, _2)
+            size_t i, j;
+            double lon = std::stod(line, &i);
+            double lat = std::stod(line.substr(i + 1), &j);
+            std::string color = line.substr(i + j + 2);
+            if (color == "BROWN")
+            {
+                _circles.push_back({
+                    CircleColor::Brown,
+                    {lon, lat},
+                });
+            }
+            else if (color == "GOLD")
+            {
+                _circles.push_back({
+                    CircleColor::Gold,
+                    {lon, lat},
+                });
+            }
+            else if (color == "BEIGE")
+            {
+                _circles.push_back({
+                    CircleColor::Beige,
+                    {lon, lat},
+                });
+            }
+            else
+            {
+                cerr << "[MapClient] Invalid circle color: " << color << endl;
+            }
+
+            readAsync();
+        }
     );
 }

@@ -11,7 +11,6 @@ class MapClient
 public:
     struct Params
     {
-        int update_delay_ms = 1000;
         std::string server = "localhost";
         std::string port = "6869";
     };
@@ -25,23 +24,16 @@ public:
 
 private:
 
-    void queryMapAsync();
+    void connectAsync();
 
-    void queryMapLaterAsync();
+    void connectRetryAsync();
 
-    void handleResolve(const boost::system::error_code &err,
-                       const boost::asio::ip::tcp::resolver::results_type &results);
-
-    void handleConnect(const boost::system::error_code &err,
-                       const boost::asio::ip::tcp::endpoint &endpoint);
-
-    void handleRead(const boost::system::error_code &err,
-                    std::size_t count);
+    void readAsync();
 
     Params _params;
     UpdateCallback _update_callback;
 
-    boost::asio::steady_timer _timer;
+    boost::asio::steady_timer _retry_timeout;
     boost::asio::ip::tcp::resolver _resolver;
     boost::asio::ip::tcp::socket _socket;
     boost::asio::streambuf _buf;
