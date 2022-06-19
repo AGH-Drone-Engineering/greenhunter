@@ -1,5 +1,8 @@
 #include "MavClient.h"
 
+#include <iostream>
+#include <string>
+
 namespace b = boost;
 namespace ba = b::asio;
 
