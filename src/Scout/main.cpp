@@ -34,6 +34,7 @@ int main(int argc, char **argv)
     }
 
     work.reset();
+    io_context.stop();
 
     return 0;
 }
