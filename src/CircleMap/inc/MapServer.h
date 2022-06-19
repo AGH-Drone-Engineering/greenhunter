@@ -20,15 +20,16 @@ public:
 
         boost::asio::ip::tcp::socket& socket();
 
-        void startWrite();
+        void start();
 
     private:
         Connection(CircleMap &map,
                    boost::asio::io_context &io_context);
 
-        void handleWrite(const boost::system::error_code &err);
+        void writeAsync();
 
         boost::asio::ip::tcp::socket _socket;
+        boost::asio::steady_timer _timer;
         CircleMap &_map;
     };
 
@@ -37,10 +38,7 @@ public:
               short port);
 
 private:
-    void startAccept();
-
-    void handleAccept(Connection::pointer conn,
-                      const boost::system::error_code &err);
+    void acceptAsync();
 
     boost::asio::io_context &_io_context;
     boost::asio::ip::tcp::acceptor _acceptor;
