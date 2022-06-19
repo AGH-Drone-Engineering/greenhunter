@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 
     Scout scout(
         io_context,
-        0,
+        "data/vid/%d.jpg",
         {}
     );
 
