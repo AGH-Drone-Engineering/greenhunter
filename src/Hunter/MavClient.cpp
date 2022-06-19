@@ -170,3 +170,58 @@ void MavClient::handleLine(const std::string &line)
              << endl;
     }
 }
+
+void MavClient::sendGoTo(const LatLon &pos)
+{
+    std::stringstream msg;
+    msg.precision(15);
+
+    msg << "GOTO "
+        << pos.get<1>() * b::geometry::math::r2d<double>()
+        << ","
+        << pos.get<0>() * b::geometry::math::r2d<double>()
+        << "\n";
+
+    msg.flush();
+
+    ba::async_write(
+        _socket,
+        ba::buffer(msg.str()),
+        []
+        (const error_code &err, size_t count)
+        {
+            if (err)
+            {
+                cerr << "[MavClient] Could not send GOTO: "
+                     << err.message()
+                     << endl;
+            }
+        }
+    );
+}
+
+void MavClient::sendShoot(const CircleColor &color)
+{
+    std::stringstream msg;
+
+    msg << "SHOOT "
+        << static_cast<int>(color)
+        << "\n";
+
+    msg.flush();
+
+    ba::async_write(
+            _socket,
+            ba::buffer(msg.str()),
+            []
+            (const error_code &err, size_t count)
+            {
+                if (err)
+                {
+                    cerr << "[MavClient] Could not send SHOOT: "
+                         << err.message()
+                         << endl;
+                }
+            }
+    );
+}
