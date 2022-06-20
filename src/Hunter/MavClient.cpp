@@ -165,14 +165,14 @@ void MavClient::handleLine(const std::string &line)
         auto alt_str = azi_str.substr(i + 1);
         double alt = std::stod(alt_str, &i);
 
-        _on_position(
+        _on_position({
+            alt,
+            azi * b::geometry::math::d2r<double>(),
             {
                 lon * b::geometry::math::d2r<double>(),
                 lat * b::geometry::math::d2r<double>(),
             },
-            azi * b::geometry::math::d2r<double>(),
-            alt
-        );
+        });
     }
     else
     {

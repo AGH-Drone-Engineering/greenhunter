@@ -3,6 +3,7 @@
 
 #include <boost/asio.hpp>
 
+#include "Telemetry.h"
 #include "MapClient.h"
 #include "MavClient.h"
 
@@ -28,10 +29,11 @@ private:
 
     void onShot();
 
-    void onPosition(const LatLon &pos, double azi, double alt);
+    void onPosition(const Telemetry &telemetry);
 
     MapClient _map;
     MavClient _mav;
+    Telemetry _telemetry;
 };
 
 #endif

@@ -4,6 +4,7 @@
 #include <functional>
 #include <boost/asio.hpp>
 
+#include "Telemetry.h"
 #include "Circle.h"
 
 class MavClient
@@ -23,7 +24,7 @@ public:
     typedef std::function<void (void)>
         ShotCallback;
 
-    typedef std::function<void (const LatLon&, double, double)>
+    typedef std::function<void (const Telemetry&)>
         PositionCallback;
 
     MavClient(boost::asio::io_context &context,
