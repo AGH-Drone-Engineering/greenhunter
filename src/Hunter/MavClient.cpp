@@ -23,6 +23,7 @@ MavClient::MavClient(ba::io_context &context,
     , _on_shot(std::move(on_shot))
     , _on_position(std::move(on_position))
     , _get_pos_timer(context)
+    , _shot_timeout(context)
     , _retry_timeout(context)
     , _resolver(context)
     , _socket(context)
@@ -234,6 +235,20 @@ void MavClient::sendShoot(const CircleColor &color)
                      << err.message()
                      << endl;
             }
+        }
+    );
+
+    // ignore potential errors to fix lockups
+
+    _shot_timeout.expires_after(
+        ba::chrono::milliseconds(_params.shot_time_ms)
+    );
+
+    _shot_timeout.async_wait(
+        [this]
+        (const error_code &err)
+        {
+            _on_shot();
         }
     );
 }

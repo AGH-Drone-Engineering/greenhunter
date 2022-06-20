@@ -16,6 +16,7 @@ public:
     {
         std::string server = "localhost";
         std::string port = "6867";
+        int shot_time_ms = 5000;
     };
 
     typedef std::function<void (void)>
@@ -58,6 +59,7 @@ private:
     PositionCallback _on_position;
 
     boost::asio::steady_timer _get_pos_timer;
+    boost::asio::steady_timer _shot_timeout;
     boost::asio::steady_timer _retry_timeout;
     boost::asio::ip::tcp::resolver _resolver;
     boost::asio::ip::tcp::socket _socket;
