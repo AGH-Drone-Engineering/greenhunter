@@ -66,11 +66,24 @@ void Hunter::goToNearest()
     auto nearest = getNearest();
     if (!nearest) return;
 
+    double distance = bg::distance(
+        _telemetry->position,
+        nearest->position
+    );
+
+    if (distance < _params.approach_dist)
+    {
+        _current_target = *nearest;
+        _state = State::APPROACH;
+        _approach_cond.notify_one();
+        return;
+    }
+
     if (_current_target &&
         bg::distance(
             _current_target->position,
             nearest->position
-        ) < _params.reroute_min_dist)
+        ) < _params.reroute_dist)
         return;
 
     cout << "[Hunter] On route to new target"
@@ -85,7 +98,6 @@ void Hunter::onMapUpdate(const std::vector<CircleOnMap> &circles)
 {
     b::lock_guard lock(_mtx);
     _targets = filterNotHit(circles);
-    dispatchMove();
 }
 
 void Hunter::onArrived()
@@ -94,29 +106,6 @@ void Hunter::onArrived()
 
     cout << "[Hunter] Arrived at waypoint"
          << endl;
-
-    switch (_state)
-    {
-        case State::GOTO:
-            // arrived at target
-            _state = State::GET_CORRECTION;
-            _state_cond.notify_one();
-            break;
-
-        case State::APPLY_CORRECTION:
-            // executed correction
-            cout << "[Hunter] Shooting"
-                 << endl;
-            _mav.sendShoot(_current_target->color);
-            _shots.push_back(_current_target->position);
-            _targets = filterNotHit(_targets);
-            _state = State::SHOOT;
-            _current_target = b::none;
-            break;
-
-        default:
-            break;
-    }
 }
 
 void Hunter::onShot()
@@ -135,6 +124,7 @@ void Hunter::onPosition(const Telemetry &telemetry)
 {
     b::lock_guard lock(_mtx);
     _telemetry = telemetry;
+    _telemetry_cond.notify_one();
     dispatchMove();
 }
 
@@ -144,26 +134,46 @@ void Hunter::run()
     {
         b::unique_lock lock(_mtx);
 
-        while (_state != State::GET_CORRECTION)
-            _state_cond.wait(lock);
-
-        auto new_target = *_current_target;
+        while (_state != State::APPROACH)
+            _approach_cond.wait(lock);
 
         lock.unlock();
 
-        cout << "[Hunter] Calculating correction"
+        cout << "[Hunter] Starting visual approach"
              << endl;
 
         cv::Mat frame;
-        bool got_correction = false;
-        double correction = 0.;
-        double best_norm = 0.;
 
-        for (int i = 0; i < _params.correction_tries; ++i)
+        int retries = _params.correction_tries;
+
+        for (;;)
         {
+            lock.lock();
+            _telemetry_cond.wait(lock);
+            const auto telem = *_telemetry;
+            lock.unlock();
+
             _cap.read(frame);
+
             const auto circles = _detector.detectCircles(frame);
-            if (circles.empty()) continue;
+            if (circles.empty())
+            {
+                if (!--retries)
+                {
+                    cout << "[Hunter] Could not find target"
+                         << endl;
+                    lock.lock();
+                    _shots.push_back(_current_target->position);
+                    _targets = filterNotHit(_targets);
+                    _state = State::IDLE;
+                    _current_target = b::none;
+                    lock.unlock();
+                    break;
+                }
+                continue;
+            }
+
+            retries = _params.correction_tries;
 
             cv::Point2f center(
                 frame.size().width * 0.5f,
@@ -187,50 +197,32 @@ void Hunter::run()
                 }
             }
 
-            if (got_correction && nearest_dist >= best_norm)
-                continue;
-
-            best_norm = nearest_dist;
-
-            lock.lock();
-
-            new_target = _localizer.localize(
+            auto target = _localizer.localize(
                 *nearest,
-                *_telemetry,
+                telem,
                 _params.camera
             );
 
-            correction = bg::distance(
-                new_target.position,
-                _current_target->position
-            );
-
-            lock.unlock();
-
-            got_correction = true;
+            if (bg::distance(
+                target.position,
+                telem.position) < _params.shooting_dist)
+            {
+                lock.lock();
+                shoot();
+                lock.unlock();
+                break;
+            }
+            else
+            {
+                lock.lock();
+                _current_target = target;
+                lock.unlock();
+                _mav.sendGoTo(target.position);
+            }
         }
 
-        lock.lock();
-
-        if (got_correction && correction < 2.)
-        {
-            cout << "[Hunter] Executing "
-                 << correction
-                 << " m correction"
-                 << endl;
-            _current_target = new_target;
-            _mav.sendGoTo(_current_target->position);
-            _state = State::APPLY_CORRECTION;
-        }
-        else
-        {
-            cout << "[Hunter] Could not locate target, skipping"
-                 << endl;
-            _shots.push_back(_current_target->position);
-            _targets = filterNotHit(_targets);
-            _state = State::IDLE;
-            _current_target = b::none;
-        }
+        cout << "[Hunter] Approach complete"
+             << endl;
     }
 }
 
@@ -270,7 +262,7 @@ Hunter::filterNotHit(const std::vector<CircleOnMap> &targets) const
         bool hit = false;
         for (const auto &s : _shots)
         {
-            if (bg::distance(c.position, s) < _params.shot_dist_threshold)
+            if (bg::distance(c.position, s) < _params.visited_dist)
             {
                 hit = true;
                 break;
@@ -279,4 +271,15 @@ Hunter::filterNotHit(const std::vector<CircleOnMap> &targets) const
         if (!hit) out.push_back(c);
     }
     return out;
+}
+
+void Hunter::shoot()
+{
+    cout << "[Hunter] Shooting"
+         << endl;
+    _mav.sendShoot(_current_target->color);
+    _shots.push_back(_current_target->position);
+    _targets = filterNotHit(_targets);
+    _state = State::SHOOT;
+    _current_target = b::none;
 }

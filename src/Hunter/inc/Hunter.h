@@ -22,8 +22,10 @@ public:
     {
         MapClient::Params map;
         MavClient::Params mav;
-        double reroute_min_dist = 0.5;
-        double shot_dist_threshold = 2.;
+        double reroute_dist = 0.1;
+        double visited_dist = 2.;
+        double approach_dist = 1.;
+        double shooting_dist = 0.2;
         int correction_tries = 5;
         CameraParams camera;
     };
@@ -44,8 +46,7 @@ private:
     {
         IDLE,
         GOTO,
-        GET_CORRECTION,
-        APPLY_CORRECTION,
+        APPROACH,
         SHOOT,
     };
 
@@ -61,6 +62,8 @@ private:
 
     void goToNearest();
 
+    void shoot();
+
     boost::optional<CircleOnMap> getNearest() const;
 
     std::vector<CircleOnMap>
@@ -69,7 +72,8 @@ private:
     const Params _params;
 
     boost::mutex _mtx;
-    boost::condition_variable _state_cond;
+    boost::condition_variable _approach_cond;
+    boost::condition_variable _telemetry_cond;
 
     MapClient _map;
     MavClient _mav;
