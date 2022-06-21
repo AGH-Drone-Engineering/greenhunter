@@ -20,6 +20,7 @@ int main(int argc, char **argv)
 
     Hunter hunter(
         io_context,
+        0,
         {}
     );
 

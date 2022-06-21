@@ -5,10 +5,13 @@
 #include <boost/asio.hpp>
 #include <boost/optional.hpp>
 #include <boost/thread.hpp>
+#include <opencv2/videoio.hpp>
 
 #include "Telemetry.h"
 #include "MapClient.h"
 #include "MavClient.h"
+#include "CircleDetector.h"
+#include "MapLocalizer.h"
 
 class Hunter
 {
@@ -21,9 +24,16 @@ public:
         MavClient::Params mav;
         double reroute_min_dist = 0.5;
         double shot_dist_threshold = 2.;
+        int correction_tries = 5;
+        CameraParams camera;
     };
 
     Hunter(boost::asio::io_context &context,
+           const std::string &camera,
+           const Params &params);
+
+    Hunter(boost::asio::io_context &context,
+           int camera,
            const Params &params);
 
     void run();
@@ -63,6 +73,9 @@ private:
 
     MapClient _map;
     MavClient _mav;
+    CircleDetector _detector;
+    MapLocalizer _localizer;
+    cv::VideoCapture _cap;
 
     boost::optional<Telemetry> _telemetry;
     std::vector<CircleOnMap> _targets;

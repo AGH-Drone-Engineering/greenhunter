@@ -12,6 +12,7 @@ namespace ba = boost::asio;
 namespace bg = boost::geometry;
 
 Hunter::Hunter(ba::io_context &context,
+               const std::string &camera,
                const Hunter::Params &params)
     : _params(params)
     , _map(context,
@@ -22,7 +23,26 @@ Hunter::Hunter(ba::io_context &context,
            std::bind(&Hunter::onShot, this),
            std::bind(&Hunter::onPosition, this, _1),
            params.mav)
+   , _cap(camera)
    , _state(State::IDLE)
+{
+
+}
+
+Hunter::Hunter(ba::io_context &context,
+               int camera,
+               const Hunter::Params &params)
+    : _params(params)
+    , _map(context,
+           std::bind(&Hunter::onMapUpdate, this, _1),
+           params.map)
+    , _mav(context,
+           std::bind(&Hunter::onArrived, this),
+           std::bind(&Hunter::onShot, this),
+           std::bind(&Hunter::onPosition, this, _1),
+           params.mav)
+    , _cap(camera)
+    , _state(State::IDLE)
 {
 
 }
@@ -127,16 +147,90 @@ void Hunter::run()
         while (_state != State::GET_CORRECTION)
             _state_cond.wait(lock);
 
+        auto new_target = *_current_target;
+
+        lock.unlock();
+
         cout << "[Hunter] Calculating correction"
              << endl;
 
-        // TODO correction
+        cv::Mat frame;
+        bool got_correction = false;
+        double correction = 0.;
+        double best_norm = 0.;
 
-        cout << "[Hunter] Executing correction"
-             << endl;
+        for (int i = 0; i < _params.correction_tries; ++i)
+        {
+            _cap.read(frame);
+            const auto circles = _detector.detectCircles(frame);
+            if (circles.empty()) continue;
 
-        _mav.sendGoTo(_current_target->position);
-        _state = State::APPLY_CORRECTION;
+            cv::Point2f center(
+                frame.size().width * 0.5f,
+                frame.size().height * 0.5f
+            );
+
+            auto nearest = circles.cbegin();
+            double nearest_dist = cv::norm(
+                nearest->ellipse.center - center
+            );
+
+            for (auto c = ++circles.cbegin(); c != circles.cend(); ++c)
+            {
+                double dist = cv::norm(
+                    c->ellipse.center - center
+                );
+                if (dist < nearest_dist)
+                {
+                    nearest = c;
+                    nearest_dist = dist;
+                }
+            }
+
+            if (got_correction && nearest_dist >= best_norm)
+                continue;
+
+            best_norm = nearest_dist;
+
+            lock.lock();
+
+            new_target = _localizer.localize(
+                *nearest,
+                *_telemetry,
+                _params.camera
+            );
+
+            correction = bg::distance(
+                new_target.position,
+                _current_target->position
+            );
+
+            lock.unlock();
+
+            got_correction = true;
+        }
+
+        lock.lock();
+
+        if (got_correction && correction < 2.)
+        {
+            cout << "[Hunter] Executing "
+                 << correction
+                 << " m correction"
+                 << endl;
+            _current_target = new_target;
+            _mav.sendGoTo(_current_target->position);
+            _state = State::APPLY_CORRECTION;
+        }
+        else
+        {
+            cout << "[Hunter] Could not locate target, skipping"
+                 << endl;
+            _shots.push_back(_current_target->position);
+            _targets = filterNotHit(_targets);
+            _state = State::IDLE;
+            _current_target = b::none;
+        }
     }
 }
 
