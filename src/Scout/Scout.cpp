@@ -26,12 +26,21 @@ Scout::Scout(boost::asio::io_context &io_context,
 
 void Scout::run()
 {
-    _drone.waitTelemetryValid();
+    namedWindow("Detections", WINDOW_NORMAL);
+    namedWindow("Map", WINDOW_NORMAL);
 
     for (;;)
     {
         auto frameTelemetryOpt = _drone.getFrameWithTelemetry();
-        if (!frameTelemetryOpt) break;
+        if (!frameTelemetryOpt)
+        {
+            cout << "[Scout] Waiting for telemetry"
+                 << endl;
+            _drone.waitTelemetryValid();
+            cout << "[Scout] Running"
+                 << endl;
+            continue;
+        }
         auto frameTelemetry = *frameTelemetryOpt;
         auto frameCircles = _detector.detectCircles(frameTelemetry.frame);
 
@@ -52,7 +61,7 @@ void Scout::run()
                     break;
             }
         }
-        namedWindow("Detections", WINDOW_NORMAL);
+
         imshow("Detections", canvas);
 
         std::for_each(
@@ -66,13 +75,11 @@ void Scout::run()
             }
         );
 
-        cout << "Circles on map: " << _map.getAll().size() << endl;
-
         canvas = Mat::zeros(1024, 1024, CV_8UC3);
         _map.draw(canvas);
-        namedWindow("Map", WINDOW_NORMAL);
+
         imshow("Map", canvas);
 
-        if (waitKey() == 'q') break;
+        if (pollKey() == 'q') break;
     }
 }
