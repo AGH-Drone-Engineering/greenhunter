@@ -18,10 +18,21 @@ int main(int argc, char **argv)
         [&] { io_context.run(); }
     ));
 
+    cv::Size frame_size(1280, 720);
+    double fov_h = 60. * boost::geometry::math::d2r<double>();
+    CameraParams camera_params = {
+        fov_h,
+        2. * atan(tan(fov_h * 0.5) / frame_size.aspectRatio()),
+        frame_size.width,
+        frame_size.height
+    };
+
     Hunter hunter(
         io_context,
         0,
-        {}
+        {
+            .camera = camera_params,
+        }
     );
 
     try
