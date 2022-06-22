@@ -26,7 +26,8 @@ Hunter::Hunter(ba::io_context &context,
    , _cap(camera)
    , _state(State::IDLE)
 {
-
+    _cap.set(cv::CAP_PROP_FRAME_WIDTH, params.camera.frame_width);
+    _cap.set(cv::CAP_PROP_FRAME_HEIGHT, params.camera.frame_height);
 }
 
 Hunter::Hunter(ba::io_context &context,
@@ -44,7 +45,8 @@ Hunter::Hunter(ba::io_context &context,
     , _cap(camera)
     , _state(State::IDLE)
 {
-
+    _cap.set(cv::CAP_PROP_FRAME_WIDTH, params.camera.frame_width);
+    _cap.set(cv::CAP_PROP_FRAME_HEIGHT, params.camera.frame_height);
 }
 
 void Hunter::dispatchMove()
