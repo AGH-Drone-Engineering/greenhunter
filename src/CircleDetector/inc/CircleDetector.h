@@ -22,7 +22,7 @@ public:
 
         double predSizeMin = 35;
         double predAreaMin = 962;
-        double predCircularityMin = 0.7;
+        double predCircularityMin = 0.8;
         double predConvexityMin = 0.9;
 
         cv::Scalar brown = {26.197183098591555 / 360. * 255., 0.48299319727891155 * 255., 0.5764705882352941 * 255.};
