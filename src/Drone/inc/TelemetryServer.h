@@ -41,6 +41,8 @@ public:;
 
     void waitValid();
 
+    void waitInAir(double altitude);
+
 private:
     bool isValid();
 

@@ -33,6 +33,7 @@ void Scout::run()
 
     for (;;)
     {
+        _drone.waitInAir(_params.min_altitude);
         auto frameTelemetryOpt = _drone.getFrameWithTelemetry();
         if (!frameTelemetryOpt)
         {

@@ -36,6 +36,13 @@ void TelemetryServer::waitValid()
     while (!isValid()) _valid_cond.wait(lock);
 }
 
+void TelemetryServer::waitInAir(double altitude)
+{
+    boost::unique_lock lock(_mtx);
+    while (!isValid() || _telemetry.altitude < altitude)
+        _valid_cond.wait(lock);
+}
+
 bool TelemetryServer::isValid()
 {
     return _lon_valid && _lat_valid && _alt_valid && _azi_valid;;

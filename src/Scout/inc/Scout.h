@@ -17,6 +17,7 @@ public:
         Drone::Params drone;
         CircleMap::Params map;
         short map_port = 6869;
+        double min_altitude = 10.;
     };
 
     Scout(boost::asio::io_context &io_context,

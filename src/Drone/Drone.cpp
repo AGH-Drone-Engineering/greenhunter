@@ -54,3 +54,8 @@ void Drone::waitTelemetryValid()
 {
     _telem_server.waitValid();
 }
+
+void Drone::waitInAir(double altitude)
+{
+    _telem_server.waitInAir(altitude);
+}

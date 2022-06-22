@@ -34,6 +34,8 @@ public:
 
     void waitTelemetryValid();
 
+    void waitInAir(double altitude);
+
 private:
     TelemetryServer _telem_server;
     cv::VideoCapture _cap;
