@@ -80,6 +80,6 @@ void Scout::run()
 
         imshow("Map", canvas);
 
-        if (pollKey() == 'q') break;
+        if (waitKey(1) == 'q') break;
     }
 }
