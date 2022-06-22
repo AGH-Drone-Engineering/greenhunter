@@ -6,6 +6,8 @@
 namespace bg = boost::geometry;
 typedef bg::formula::vincenty_direct<double, true> vincenty;
 
+using boost::math::constants::half_pi;
+
 CircleOnMap MapLocalizer::localize(const CircleOnFrame &circle,
                                    const Telemetry &telemetry,
                                    const CameraParams &camera_params) const
@@ -19,7 +21,7 @@ CircleOnMap MapLocalizer::localize(const CircleOnFrame &circle,
     double dy = (0.5 * camera_params.frame_height - frame_point.y) * ground_height / camera_params.frame_height;
 
     double dist = sqrt(dx*dx + dy*dy);
-    double azi_rad = -atan2(dy, dx) + M_PI_2 + telemetry.azimuth;
+    double azi_rad = -atan2(dy, dx) + half_pi<double>() + telemetry.azimuth;
 
     auto res = vincenty::apply(
         telemetry.position.get<0>(),

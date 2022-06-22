@@ -8,6 +8,9 @@ namespace bg = boost::geometry;
 typedef bg::formula::vincenty_inverse<double, true, true> vin_inv;
 typedef bg::formula::vincenty_direct<double, true> vin_dir;
 
+using boost::math::constants::half_pi;
+using boost::math::constants::quarter_pi;
+
 static void mergeClusters(CircleMap::CircleCluster &c1,
                           const CircleMap::CircleCluster &c2)
 {
@@ -126,7 +129,7 @@ void CircleMap::draw(cv::InputOutputArray canvas)
         lon_min,
         lat_min,
         5,
-        5 * M_PI_4,
+        5 * quarter_pi<double>(),
         bg::srs::spheroid<double>()
     );
 
@@ -134,7 +137,7 @@ void CircleMap::draw(cv::InputOutputArray canvas)
         lon_max,
         lat_max,
         5,
-        M_PI_4,
+        quarter_pi<double>(),
         bg::srs::spheroid<double>()
     );
 
@@ -171,7 +174,7 @@ void CircleMap::draw(cv::InputOutputArray canvas)
             bg::srs::spheroid<double>()
         );
 
-        double ang = -res.azimuth + M_PI_2;
+        double ang = -res.azimuth + half_pi<double>();
 
         double xm = res.distance * cos(ang);
         double ym = res.distance * sin(ang);

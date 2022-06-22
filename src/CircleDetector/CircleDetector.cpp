@@ -5,6 +5,8 @@
 using namespace cv;
 using namespace std;
 
+using boost::math::constants::pi;
+
 vector<CircleOnFrame> CircleDetector::detectCircles(InputArray src) const
 {
     Mat img;
@@ -43,7 +45,7 @@ vector<CircleOnFrame> CircleDetector::detectCircles(InputArray src) const
 
         double cnt_area = contourArea(cnts[i]);
         double cnt_peri = arcLength(cnts[i], true);
-        double circularity = 4. * M_PI * cnt_area / cnt_peri / cnt_peri;
+        double circularity = 4. * pi<double>() * cnt_area / cnt_peri / cnt_peri;
 
         vector<Point> hull;
         convexHull(cnts[i], hull);
