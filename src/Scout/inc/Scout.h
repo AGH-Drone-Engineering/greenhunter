@@ -30,6 +30,7 @@ public:
     void run();
 
 private:
+    Params _params;
     Drone _drone;
     CircleDetector _detector;
     MapLocalizer _localizer;

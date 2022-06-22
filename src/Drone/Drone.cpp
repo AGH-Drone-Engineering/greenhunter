@@ -1,7 +1,6 @@
 #include "Drone.h"
 
 #include <opencv2/imgcodecs.hpp>
-#include <boost/geometry.hpp>
 
 using namespace cv;
 
@@ -10,14 +9,20 @@ Drone::Drone(boost::asio::io_context &io_context,
              const Params &params)
     : _telem_server(io_context, params.telem_port)
     , _cap(camera)
-{}
+{
+    _cap.set(cv::CAP_PROP_FRAME_WIDTH, params.camera.frame_width);
+    _cap.set(cv::CAP_PROP_FRAME_HEIGHT, params.camera.frame_height);
+}
 
 Drone::Drone(boost::asio::io_context &io_context,
              int camera,
              const Params &params)
     : _telem_server(io_context, params.telem_port)
     , _cap(camera)
-{}
+{
+    _cap.set(cv::CAP_PROP_FRAME_WIDTH, params.camera.frame_width);
+    _cap.set(cv::CAP_PROP_FRAME_HEIGHT, params.camera.frame_height);
+}
 
 cv::Mat Drone::getFrame()
 {
@@ -39,18 +44,8 @@ boost::optional<FrameTelemetry> Drone::getFrameWithTelemetry()
 
     auto frame = getFrame();
 
-    double fov_h = 60. * boost::geometry::math::d2r<double>();
-
-    CameraParams camera = {
-        fov_h,
-        2. * atan(tan(fov_h * 0.5) / frame.size().aspectRatio()),
-        frame.size().width,
-        frame.size().height
-    };
-
     return boost::make_optional<FrameTelemetry>({
         frame,
-        camera,
         telemetry
     });
 }

@@ -5,6 +5,7 @@
 #include <boost/optional.hpp>
 #include <opencv2/videoio.hpp>
 
+#include "CameraParams.h"
 #include "FrameTelemetry.h"
 #include "TelemetryServer.h"
 
@@ -14,6 +15,7 @@ public:
     struct Params
     {
         short telem_port = 6868;
+        CameraParams camera;
     };
 
     Drone(boost::asio::io_context &io_context,

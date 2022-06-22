@@ -18,10 +18,22 @@ int main(int argc, char **argv)
         [&] { io_context.run(); }
     ));
 
+    cv::Size frame_size(1280, 720);
+    double fov_h = 60. * boost::geometry::math::d2r<double>();
+
     Scout scout(
         io_context,
         0,
-        {}
+        {
+            .drone = {
+                .camera = {
+                    .fov_h = fov_h,
+                    .fov_v = 2. * atan(tan(fov_h * 0.5) / frame_size.aspectRatio()),
+                    .frame_width = frame_size.width,
+                    .frame_height = frame_size.height,
+                },
+            }
+        }
     );
 
     try

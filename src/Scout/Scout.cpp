@@ -11,7 +11,8 @@ using namespace cv;
 Scout::Scout(boost::asio::io_context &io_context,
              const string &camera,
              const Params &params)
-    : _drone(io_context, camera, params.drone)
+    : _params(params)
+    , _drone(io_context, camera, params.drone)
     , _map(params.map)
     , _map_server(io_context, _map, params.map_port)
 {}
@@ -19,7 +20,8 @@ Scout::Scout(boost::asio::io_context &io_context,
 Scout::Scout(boost::asio::io_context &io_context,
              int camera,
              const Params &params)
-    : _drone(io_context, camera, params.drone)
+    : _params(params)
+    , _drone(io_context, camera, params.drone)
     , _map(params.map)
     , _map_server(io_context, _map, params.map_port)
 {}
@@ -70,7 +72,7 @@ void Scout::run()
             [&] (const CircleOnFrame &c) {
                 _map.push(_localizer.localize(c,
                     frameTelemetry.telemetry,
-                    frameTelemetry.camera
+                    _params.drone.camera
                 ));
             }
         );
