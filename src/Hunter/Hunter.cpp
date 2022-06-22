@@ -99,7 +99,7 @@ void Hunter::goToNearest()
 void Hunter::onMapUpdate(const std::vector<CircleOnMap> &circles)
 {
     b::lock_guard lock(_mtx);
-    _targets = filterNotHit(circles);
+    _targets = filterTargets(circles);
 }
 
 void Hunter::onArrived()
@@ -165,8 +165,8 @@ void Hunter::run()
                     cout << "[Hunter] Could not find target"
                          << endl;
                     lock.lock();
-                    _shots.push_back(_current_target->position);
-                    _targets = filterNotHit(_targets);
+                    _visited.push_back(_current_target->position);
+                    _targets = filterTargets(_targets);
                     _state = State::IDLE;
                     _current_target = b::none;
                     lock.unlock();
@@ -256,13 +256,17 @@ b::optional<CircleOnMap> Hunter::getNearest() const
 }
 
 std::vector<CircleOnMap>
-Hunter::filterNotHit(const std::vector<CircleOnMap> &targets) const
+Hunter::filterTargets(const std::vector<CircleOnMap> &circles) const
 {
     std::vector<CircleOnMap> out;
-    for (const auto &c : targets)
+    for (const auto &c : circles)
     {
+        if (c.color != CircleColor::Gold &&
+            c.color != CircleColor::Beige)
+            continue;
+
         bool hit = false;
-        for (const auto &s : _shots)
+        for (const auto &s : _visited)
         {
             if (bg::distance(c.position, s) < _params.visited_dist)
             {
@@ -280,8 +284,8 @@ void Hunter::shoot()
     cout << "[Hunter] Shooting"
          << endl;
     _mav.sendShoot(_current_target->color);
-    _shots.push_back(_current_target->position);
-    _targets = filterNotHit(_targets);
+    _visited.push_back(_current_target->position);
+    _targets = filterTargets(_targets);
     _state = State::SHOOT;
     _current_target = b::none;
 }
