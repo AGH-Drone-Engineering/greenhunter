@@ -182,6 +182,9 @@ void CircleMap::draw(cv::InputOutputArray canvas)
             canvas.size().height - ym * px_per_m
         );
 
+        if (!px.inside(cv::Rect(cv::Point(0, 0), canvas.size())))
+            continue;
+
         circle(
             canvas,
             px,
