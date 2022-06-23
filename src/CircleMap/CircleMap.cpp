@@ -88,21 +88,19 @@ std::vector<CircleOnMap> CircleMap::getAll()
 {
     boost::lock_guard guard(_mtx);
     std::vector<CircleOnMap> out;
-    std::transform(
-        _clusters.cbegin(),
-        _clusters.cend(),
-        std::back_inserter(out),
-        [] (const CircleCluster &c) {
-            return CircleOnMap({
-                (c.brown_votes >= c.gold_votes && c.brown_votes >= c.beige_votes)
-                    ? CircleColor::Brown :
-                (c.gold_votes >= c.brown_votes && c.gold_votes >= c.beige_votes)
-                    ? CircleColor::Gold
-                    : CircleColor::Beige,
-                c.position
-            });
-        }
-    );
+    for (const auto &c : _clusters)
+    {
+        if (c.brown_votes >= c.gold_votes &&
+            c.brown_votes >= c.beige_votes &&
+            c.brown_votes >= _params.min_detections)
+            out.push_back({CircleColor::Brown, c.position});
+        else if (c.gold_votes >= c.brown_votes &&
+                 c.gold_votes >= c.beige_votes &&
+                 c.gold_votes >= _params.min_detections)
+            out.push_back({CircleColor::Gold, c.position});
+        else if (c.beige_votes >= _params.min_detections)
+            out.push_back({CircleColor::Beige, c.position});
+    }
     return out;
 }
 

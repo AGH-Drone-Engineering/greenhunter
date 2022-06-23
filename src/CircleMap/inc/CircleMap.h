@@ -16,6 +16,7 @@ public:
     struct Params
     {
         double clustering_distance = 2.;
+        int min_detections = 5;
     };
 
     struct CircleCluster
