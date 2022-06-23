@@ -15,7 +15,7 @@ set(DEPS
     ${OpenCV_LIBS}
     Boost::boost
     Boost::thread
-    Drone
+    Greenhunter
     CircleDetector
     CircleMap
     )

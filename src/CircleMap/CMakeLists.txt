@@ -14,8 +14,7 @@ set(DEPS
     ${OpenCV_LIBS}
     Boost::boost
     Boost::thread
-    Drone
-    CircleDetector
+    Greenhunter
 )
 
 add_library(${TARGET} STATIC ${SRCS})

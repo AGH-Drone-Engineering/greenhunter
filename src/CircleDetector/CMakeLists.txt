@@ -9,6 +9,7 @@ set(DEPS
     PUBLIC
     ${OpenCV_LIBS}
     Boost::boost
+    Greenhunter
 )
 
 add_library(${TARGET} STATIC ${SRCS})

@@ -2,7 +2,11 @@ set(TARGET Scout)
 
 set(SRCS
     inc/Scout.h
+    inc/Drone.h
+    inc/TelemetryServer.h
     Scout.cpp
+    Drone.cpp
+    TelemetryServer.cpp
     main.cpp
 )
 
@@ -11,7 +15,7 @@ set(DEPS
     ${OpenCV_LIBS}
     Boost::boost
     Boost::thread
-    Drone
+    Greenhunter
     CircleDetector
     CircleMap
 )
