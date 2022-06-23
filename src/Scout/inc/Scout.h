@@ -18,7 +18,7 @@ public:
         CircleMap::Params map;
         CircleDetector::Config detector;
         short map_port = 6869;
-        double min_altitude = 10.;
+        double min_altitude = 4.;
     };
 
     Scout(boost::asio::io_context &io_context,
