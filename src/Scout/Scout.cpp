@@ -13,6 +13,7 @@ Scout::Scout(boost::asio::io_context &io_context,
              const Params &params)
     : _params(params)
     , _drone(io_context, camera, params.drone)
+    , _detector(params.detector, params.drone.camera)
     , _map(params.map)
     , _map_server(io_context, _map, params.map_port)
 {}
@@ -22,6 +23,7 @@ Scout::Scout(boost::asio::io_context &io_context,
              const Params &params)
     : _params(params)
     , _drone(io_context, camera, params.drone)
+    , _detector(params.detector, params.drone.camera)
     , _map(params.map)
     , _map_server(io_context, _map, params.map_port)
 {}
@@ -45,7 +47,7 @@ void Scout::run()
             continue;
         }
         auto frameTelemetry = *frameTelemetryOpt;
-        auto frameCircles = _detector.detectCircles(frameTelemetry.frame);
+        auto frameCircles = _detector.detectCircles(frameTelemetry.frame, frameTelemetry.telemetry.altitude);
 
         Mat canvas = frameTelemetry.frame.clone();
         for (const auto &c : frameCircles)

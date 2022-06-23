@@ -22,6 +22,7 @@ public:
     {
         MapClient::Params map;
         MavClient::Params mav;
+        CircleDetector::Config detector;
         double reroute_dist = 0.1;
         double visited_dist = 2.;
         double approach_dist = 1.;

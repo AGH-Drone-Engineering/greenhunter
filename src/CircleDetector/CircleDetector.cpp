@@ -7,13 +7,27 @@ using namespace std;
 
 using boost::math::constants::pi;
 
-vector<CircleOnFrame> CircleDetector::detectCircles(InputArray src) const
+CircleDetector::CircleDetector(const Config &config,
+                               const CameraParams &camera)
+    : _config(config)
+    , _camera(camera)
+{
+
+}
+
+vector<CircleOnFrame> CircleDetector::detectCircles(InputArray src, double altitude) const
 {
     Mat img;
 
-    medianBlur(src, img, _config.medianSize);
+    double ground_width = 2. * altitude * tan(_camera.fov_h * 0.5);
+    double ground_height = 2. * altitude * tan(_camera.fov_v * 0.5);
 
-    for (int i = 0; i < _config.medianIters - 1; ++i)
+    double fx = _config.px_per_m / src.size().width * ground_width;
+    double fy = _config.px_per_m / src.size().height * ground_height;
+
+    resize(src, img, Size(), fx, fy, INTER_AREA);
+
+    for (int i = 0; i < _config.medianIters; ++i)
     {
         medianBlur(img, img, _config.medianSize);
     }
@@ -111,6 +125,11 @@ vector<CircleOnFrame> CircleDetector::detectCircles(InputArray src) const
         double err_brown_mean = mean(err_brown)[0];
         double err_gold_mean = mean(err_gold)[0];
         double err_beige_mean = mean(err_beige)[0];
+
+        obj.center.x /= fx;
+        obj.center.y /= fy;
+        obj.size.width /= fx;
+        obj.size.height /= fy;
 
         if (err_brown_mean <= err_gold_mean && err_gold_mean <= err_beige_mean)
             circles.push_back({CircleColor::Brown, obj});

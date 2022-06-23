@@ -23,6 +23,7 @@ Hunter::Hunter(ba::io_context &context,
            std::bind(&Hunter::onShot, this),
            std::bind(&Hunter::onPosition, this, _1),
            params.mav)
+   , _detector(params.detector, params.camera)
    , _cap(camera)
    , _state(State::IDLE)
 {
@@ -42,6 +43,7 @@ Hunter::Hunter(ba::io_context &context,
            std::bind(&Hunter::onShot, this),
            std::bind(&Hunter::onPosition, this, _1),
            params.mav)
+    , _detector(params.detector, params.camera)
     , _cap(camera)
     , _state(State::IDLE)
 {
@@ -157,7 +159,7 @@ void Hunter::run()
 
             _cap.read(frame);
 
-            const auto circles = _detector.detectCircles(frame);
+            const auto circles = _detector.detectCircles(frame, telem.altitude);
             if (circles.empty())
             {
                 if (!--retries)

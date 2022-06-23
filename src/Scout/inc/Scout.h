@@ -16,6 +16,7 @@ public:
     {
         Drone::Params drone;
         CircleMap::Params map;
+        CircleDetector::Config detector;
         short map_port = 6869;
         double min_altitude = 10.;
     };
