@@ -9,6 +9,7 @@ enum class CircleColor
     Brown,
     Gold,
     Beige,
+    WhiteSquare,
 };
 
 struct CircleOnFrame

@@ -64,6 +64,9 @@ void Scout::run()
                 case CircleColor::Beige:
                     putText(canvas, "Beige", c.ellipse.boundingRect().tl(), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255));
                     break;
+                case CircleColor::WhiteSquare:
+                    putText(canvas, "WhiteSquare", c.ellipse.boundingRect().tl(), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 255));
+                    break;
             }
         }
 

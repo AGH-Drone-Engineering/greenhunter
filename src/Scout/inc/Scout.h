@@ -5,9 +5,12 @@
 
 #include "Drone.h"
 #include "CircleDetector.h"
+#include "CircleSquareDetector.h"
 #include "MapLocalizer.h"
 #include "CircleMap.h"
 #include "MapServer.h"
+
+#define CIRCLE_DETECTOR CircleDetector
 
 class Scout
 {
@@ -16,7 +19,7 @@ public:
     {
         Drone::Params drone;
         CircleMap::Params map;
-        CircleDetector::Config detector;
+        CIRCLE_DETECTOR::Config detector;
         short map_port = 6869;
         double min_altitude = 4.;
     };
@@ -34,7 +37,7 @@ public:
 private:
     Params _params;
     Drone _drone;
-    CircleDetector _detector;
+    CIRCLE_DETECTOR _detector;
     MapLocalizer _localizer;
     CircleMap _map;
     MapServer _map_server;
