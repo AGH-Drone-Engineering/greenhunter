@@ -19,8 +19,8 @@ int main(int argc, char **argv)
     ));
 
     Hunter::Params params;
-    params.camera.fov_h = 60. * boost::geometry::math::d2r<double>();
-    params.camera.fov_v = 36. * boost::geometry::math::d2r<double>();
+    params.camera.fov_h = 1.4337743723146694;
+    params.camera.fov_v = 0.9116525831991906;
     params.camera.frame_width = 1280;
     params.camera.frame_height = 720;
 
