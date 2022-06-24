@@ -231,7 +231,7 @@ void Hunter::run()
             else
             {
                 lock.lock();
-                _current_target = target;
+                _current_target->position = target.position;
                 lock.unlock();
                 _mav.sendGoTo(target.position);
             }
