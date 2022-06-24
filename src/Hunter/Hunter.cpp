@@ -125,7 +125,6 @@ void Hunter::onShot()
     {
         cout << "[Hunter] Shot complete"
              << endl;
-        _logger.logCircleImage(*_last_target, _last_target_img);
         _state = State::IDLE;
     }
 }
@@ -222,8 +221,8 @@ void Hunter::run()
                 telem.position) < _params.shooting_dist)
             {
                 lock.lock();
-                _last_target = *_current_target;
-                _last_target_img = frame;
+                _logger.logCircleImage(*_current_target, frame);
+                _logger.logAction("SHOOT", *_current_target);
                 shoot();
                 lock.unlock();
                 break;
@@ -301,6 +300,5 @@ void Hunter::shoot()
     _visited.push_back(_current_target->position);
     _targets = filterTargets(_targets);
     _state = State::SHOOT;
-    _logger.logAction("SHOOT", *_current_target);
     _current_target = b::none;
 }

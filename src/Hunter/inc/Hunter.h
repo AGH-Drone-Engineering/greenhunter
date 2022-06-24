@@ -89,8 +89,6 @@ private:
     std::vector<CircleOnMap> _targets;
     std::vector<LatLon> _visited;
     boost::optional<CircleOnMap> _current_target;
-    boost::optional<CircleOnMap> _last_target;
-    cv::Mat _last_target_img;
 
     State _state;
 };
