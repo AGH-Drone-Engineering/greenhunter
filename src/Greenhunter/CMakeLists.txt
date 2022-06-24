@@ -5,6 +5,7 @@ set(SRCS
     inc/Telemetry.h
     inc/FrameTelemetry.h
     inc/Circle.h
+    inc/Position.h
 )
 
 set(DEPS

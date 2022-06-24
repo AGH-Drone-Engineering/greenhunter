@@ -21,7 +21,8 @@ public:
         boost::filesystem::path action_file = "actions.txt";
         boost::filesystem::path telemetry_file = "telemetry.txt";
         boost::filesystem::path map_file = "map.txt";
-        boost::filesystem::path images_dir = "images";
+        boost::filesystem::path flight_img_dir = "flight";
+        boost::filesystem::path circle_img_dir = "circles";
     };
 
     MissionLogger(boost::asio::io_context &context,
@@ -29,17 +30,23 @@ public:
 
     void logShoot(const CircleOnMap &circle);
 
-    void logPostShoot(const CircleOnMap &circle, cv::InputArray img);
+    void logCircleImage(const CircleOnMap &circle, cv::InputArray img);
+
+    void logFlightImage(cv::InputArray img);
 
     void logTelemetry(const Telemetry &telemetry);
 
     void logMap(const std::vector<CircleOnMap> &circles);
 
 private:
+    long getTimestamp() const;
+
     boost::asio::io_context &_context;
     const Params _params;
     const boost::filesystem::path _mission_path;
+    const long _mission_start;
     boost::mutex _mtx;
+    int _n_flight_images;
 };
 
 #endif

@@ -5,6 +5,8 @@
 #include <boost/geometry.hpp>
 #include <string>
 
+#include "Position.h"
+
 enum class CircleColor
 {
     Brown,
@@ -21,15 +23,20 @@ struct CircleOnFrame
 
 struct CircleOnMap
 {
-    typedef boost::geometry::model::point<
-        double, 2, boost::geometry::cs::geographic<
-            boost::geometry::radian>>
-        LatLon;
-
+    typedef Position LatLon;
     CircleColor color;
-    LatLon position;
+    Position position;
 };
 
+static std::string position_to_string_deg(const Position &position)
+{
+    using boost::geometry::math::r2d;
+    std::stringstream ss;
+    ss.precision(8);
+    ss << position.get<1>() * r2d<double>() << ","
+       << position.get<0>() * r2d<double>();
+    return ss.str();
+}
 
 static std::string circle_to_string(const CircleColor &color)
 {
@@ -50,13 +57,8 @@ static std::string circle_to_string(const CircleColor &color)
 
 static std::string circle_to_string(const CircleOnMap &circle)
 {
-    using boost::geometry::math::r2d;
-    std::stringstream str;
-    str.precision(8);
-    str << circle.position.get<1>() * r2d<double>() << ","
-        << circle.position.get<0>() * r2d<double>() << ","
-        << circle_to_string(circle.color);
-    return str.str();
+    return position_to_string_deg(circle.position) +
+           + "," + circle_to_string(circle.color);
 }
 
 #endif

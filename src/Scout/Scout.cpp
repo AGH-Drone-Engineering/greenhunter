@@ -49,6 +49,10 @@ void Scout::run()
             continue;
         }
         auto frameTelemetry = *frameTelemetryOpt;
+
+        _logger.logTelemetry(frameTelemetry.telemetry);
+        _logger.logFlightImage(frameTelemetry.frame);
+
         auto frameCircles = _detector.detectCircles(frameTelemetry.frame, frameTelemetry.telemetry.altitude);
 
         Mat canvas = frameTelemetry.frame.clone();
@@ -84,6 +88,8 @@ void Scout::run()
                 ));
             }
         );
+
+        _logger.logMap(_map.getAll());
 
         canvas = Mat::zeros(1024, 1024, CV_8UC3);
         _map.draw(canvas);
