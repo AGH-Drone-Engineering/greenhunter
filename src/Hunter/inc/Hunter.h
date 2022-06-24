@@ -12,6 +12,7 @@
 #include "MavClient.h"
 #include "CircleDetector.h"
 #include "MapLocalizer.h"
+#include "MissionLogger.h"
 
 class Hunter
 {
@@ -20,6 +21,7 @@ public:
 
     struct Params
     {
+        MissionLogger::Params logger;
         MapClient::Params map;
         MavClient::Params mav;
         CircleDetector::Config detector;
@@ -76,6 +78,7 @@ private:
     boost::condition_variable _approach_cond;
     boost::condition_variable _telemetry_cond;
 
+    MissionLogger _logger;
     MapClient _map;
     MavClient _mav;
     CircleDetector _detector;
@@ -86,6 +89,8 @@ private:
     std::vector<CircleOnMap> _targets;
     std::vector<LatLon> _visited;
     boost::optional<CircleOnMap> _current_target;
+    boost::optional<CircleOnMap> _last_target;
+    cv::Mat _last_target_img;
 
     State _state;
 };

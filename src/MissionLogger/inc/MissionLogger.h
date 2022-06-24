@@ -28,7 +28,7 @@ public:
     MissionLogger(boost::asio::io_context &context,
                   const Params &params);
 
-    void logShoot(const CircleOnMap &circle);
+    void logAction(const std::string &action, const CircleOnMap &circle);
 
     void logCircleImage(const CircleOnMap &circle, cv::InputArray img);
 

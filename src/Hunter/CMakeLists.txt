@@ -18,6 +18,7 @@ set(DEPS
     Greenhunter
     CircleDetector
     CircleMap
+    MissionLogger
     )
 
 add_executable(${TARGET} ${SRCS})

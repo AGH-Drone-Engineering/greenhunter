@@ -42,15 +42,15 @@ MissionLogger::MissionLogger(ba::io_context &context,
     });
 }
 
-void MissionLogger::logShoot(const CircleOnMap &circle)
+void MissionLogger::logAction(const std::string &action, const CircleOnMap &circle)
 {
     const auto t = getTimestamp();
-    _context.post([this, t, circle] {
+    _context.post([this, t, action, circle] {
         b::lock_guard lock(_mtx);
         bfs::fstream fs;
         fs.open(_mission_path / _params.action_file, bfs::fstream::app);
         fs << t << ","
-           << "SHOOT,"
+           << action << ","
            << circle_to_string(circle)
            << endl;
         fs.close();

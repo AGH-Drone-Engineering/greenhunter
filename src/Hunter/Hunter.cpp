@@ -15,6 +15,7 @@ Hunter::Hunter(ba::io_context &context,
                const std::string &camera,
                const Hunter::Params &params)
     : _params(params)
+    , _logger(context, params.logger)
     , _map(context,
            std::bind(&Hunter::onMapUpdate, this, _1),
            params.map)
@@ -35,6 +36,7 @@ Hunter::Hunter(ba::io_context &context,
                int camera,
                const Hunter::Params &params)
     : _params(params)
+    , _logger(context, params.logger)
     , _map(context,
            std::bind(&Hunter::onMapUpdate, this, _1),
            params.map)
@@ -96,11 +98,14 @@ void Hunter::goToNearest()
     _current_target = *nearest;
     _mav.sendGoTo(nearest->position);
     _state = State::GOTO;
+
+    _logger.logAction("GOTO", *nearest);
 }
 
 void Hunter::onMapUpdate(const std::vector<CircleOnMap> &circles)
 {
     b::lock_guard lock(_mtx);
+    _logger.logMap(circles);
     _targets = filterTargets(circles);
 }
 
@@ -120,6 +125,7 @@ void Hunter::onShot()
     {
         cout << "[Hunter] Shot complete"
              << endl;
+        _logger.logCircleImage(*_last_target, _last_target_img);
         _state = State::IDLE;
     }
 }
@@ -130,6 +136,7 @@ void Hunter::onPosition(const Telemetry &telemetry)
     _telemetry = telemetry;
     _telemetry_cond.notify_one();
     dispatchMove();
+    _logger.logTelemetry(telemetry);
 }
 
 void Hunter::run()
@@ -140,6 +147,8 @@ void Hunter::run()
 
         while (_state != State::APPROACH)
             _approach_cond.wait(lock);
+
+        _logger.logAction("AIM", *_current_target);
 
         lock.unlock();
 
@@ -167,6 +176,7 @@ void Hunter::run()
                     cout << "[Hunter] Could not find target"
                          << endl;
                     lock.lock();
+                    _logger.logAction("MISS", *_current_target);
                     _visited.push_back(_current_target->position);
                     _targets = filterTargets(_targets);
                     _state = State::IDLE;
@@ -212,6 +222,8 @@ void Hunter::run()
                 telem.position) < _params.shooting_dist)
             {
                 lock.lock();
+                _last_target = *_current_target;
+                _last_target_img = frame;
                 shoot();
                 lock.unlock();
                 break;
@@ -289,5 +301,6 @@ void Hunter::shoot()
     _visited.push_back(_current_target->position);
     _targets = filterTargets(_targets);
     _state = State::SHOOT;
+    _logger.logAction("SHOOT", *_current_target);
     _current_target = b::none;
 }
