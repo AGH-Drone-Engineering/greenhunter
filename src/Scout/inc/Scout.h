@@ -9,6 +9,7 @@
 #include "MapLocalizer.h"
 #include "CircleMap.h"
 #include "MapServer.h"
+#include "MissionLogger.h"
 
 #define CIRCLE_DETECTOR CircleDetector
 
@@ -17,6 +18,7 @@ class Scout
 public:
     struct Params
     {
+        MissionLogger::Params logger;
         Drone::Params drone;
         CircleMap::Params map;
         CIRCLE_DETECTOR::Config detector;
@@ -41,6 +43,7 @@ private:
     MapLocalizer _localizer;
     CircleMap _map;
     MapServer _map_server;
+    MissionLogger _logger;
 };
 
 #endif

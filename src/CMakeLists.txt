@@ -1,5 +1,6 @@
 add_subdirectory(Greenhunter)
 add_subdirectory(CircleDetector)
 add_subdirectory(CircleMap)
+add_subdirectory(MissionLogger)
 add_subdirectory(Scout)
 add_subdirectory(Hunter)

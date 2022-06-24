@@ -16,6 +16,7 @@ Scout::Scout(boost::asio::io_context &io_context,
     , _detector(params.detector, params.drone.camera)
     , _map(params.map)
     , _map_server(io_context, _map, params.map_port)
+    , _logger(io_context, params.logger)
 {}
 
 Scout::Scout(boost::asio::io_context &io_context,
@@ -26,6 +27,7 @@ Scout::Scout(boost::asio::io_context &io_context,
     , _detector(params.detector, params.drone.camera)
     , _map(params.map)
     , _map_server(io_context, _map, params.map_port)
+    , _logger(io_context, params.logger)
 {}
 
 void Scout::run()
