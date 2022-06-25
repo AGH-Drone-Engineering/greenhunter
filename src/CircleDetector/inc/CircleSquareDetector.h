@@ -23,9 +23,10 @@ public:
 
         double predSizeMin = 35;
         double predAreaMin = 962;
-        double predCircularityMin = 0.85;
+        double predCircularityMinCircle = 0.85;
+        double predCircularityMinSquare = 0.7;
         double predConvexityMin = 0.9;
-        double predSquareRatioMin = 0.85;
+        double predSquareRatioMin = 0.8;
 
         double beigeSatMax = 0.1;
 

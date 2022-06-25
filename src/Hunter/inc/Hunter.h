@@ -11,8 +11,11 @@
 #include "MapClient.h"
 #include "MavClient.h"
 #include "CircleDetector.h"
+#include "CircleSquareDetector.h"
 #include "MapLocalizer.h"
 #include "MissionLogger.h"
+
+#define CIRCLE_DETECTOR CircleSquareDetector
 
 class Hunter
 {
@@ -24,7 +27,7 @@ public:
         MissionLogger::Params logger;
         MapClient::Params map;
         MavClient::Params mav;
-        CircleDetector::Config detector;
+        CIRCLE_DETECTOR::Config detector;
         double reroute_dist = 0.1;
         double visited_dist = 2.;
         double approach_dist = 1.;
@@ -86,7 +89,7 @@ private:
     MissionLogger _logger;
     MapClient _map;
     MavClient _mav;
-    CircleDetector _detector;
+    CIRCLE_DETECTOR _detector;
     MapLocalizer _localizer;
     cv::VideoCapture _cap;
 

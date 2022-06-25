@@ -11,7 +11,7 @@
 #include "MapServer.h"
 #include "MissionLogger.h"
 
-#define CIRCLE_DETECTOR CircleDetector
+#define CIRCLE_DETECTOR CircleSquareDetector
 
 class Scout
 {

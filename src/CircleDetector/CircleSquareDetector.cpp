@@ -1,5 +1,6 @@
 #include "CircleSquareDetector.h"
 
+#include <iostream>
 #include <opencv2/imgproc.hpp>
 
 using namespace cv;
@@ -81,9 +82,10 @@ vector<CircleOnFrame> CircleSquareDetector::detectCircles(InputArray src, double
 
             bool is_square = false;
 
-            if (circularity < _config.predCircularityMin)
+            if (circularity < _config.predCircularityMinCircle)
             {
-                if (square_ratio > _config.predSquareRatioMin)
+                if (square_ratio > _config.predSquareRatioMin &&
+                    circularity > _config.predCircularityMinSquare)
                 {
                     is_square = true;
                     fit_ellipse = fit_rect;
@@ -114,20 +116,10 @@ vector<CircleOnFrame> CircleSquareDetector::detectCircles(InputArray src, double
             const auto mean_color = mean(obj_img);
             CircleColor circle_color;
 
-            if (is_square)
-            {
-                if (mean_color[1] / 255.f < _config.beigeSatMax)
-                    circle_color = CircleColor::WhiteSquare;
-                else
-                    circle_color = CircleColor::Brown;
-            }
+            if (mean_color[1] / 255.f < _config.beigeSatMax)
+                circle_color = is_square ? CircleColor::WhiteSquare : CircleColor::Beige;
             else
-            {
-                if (mean_color[1] / 255.f < _config.beigeSatMax)
-                    circle_color = CircleColor::Beige;
-                else
-                    circle_color = CircleColor::Gold;
-            }
+                circle_color = is_square ? CircleColor::Brown : CircleColor::Gold;
 
             fit_ellipse.center.x /= fx;
             fit_ellipse.center.y /= fy;
