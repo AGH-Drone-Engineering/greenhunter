@@ -18,9 +18,9 @@ static void mergeClusters(CircleMap::CircleCluster &c1,
     auto p2 = c2.position;
 
     bg::multiply_value(p1,
-       c1.brown_votes + c1.gold_votes + c1.beige_votes);
+       c1.brown_votes + c1.gold_votes + c1.beige_votes + c1.whsq_votes);
     bg::multiply_value(p2,
-       c2.brown_votes + c2.gold_votes + c2.beige_votes);
+       c2.brown_votes + c2.gold_votes + c2.beige_votes + c2.whsq_votes);
 
     bg::add_point(p1, p2);
 
@@ -29,14 +29,17 @@ static void mergeClusters(CircleMap::CircleCluster &c1,
         c1.brown_votes +
         c1.gold_votes +
         c1.beige_votes +
+        c1.whsq_votes +
         c2.brown_votes +
         c2.gold_votes +
-        c2.beige_votes
+        c2.beige_votes +
+        c2.whsq_votes
     );
 
     c1.brown_votes += c2.brown_votes;
     c1.gold_votes += c2.gold_votes;
     c1.beige_votes += c2.beige_votes;
+    c1.whsq_votes += c2.whsq_votes;
 }
 
 CircleMap::CircleMap(const Params &params)
@@ -72,6 +75,7 @@ void CircleMap::push(const CircleOnMap &circle)
         circle.color == CircleColor::Brown ? 1 : 0,
         circle.color == CircleColor::Gold ? 1 : 0,
         circle.color == CircleColor::Beige ? 1 : 0,
+        circle.color == CircleColor::WhiteSquare ? 1 : 0,
     };
 
     for (const auto &c : to_merge)
@@ -92,14 +96,21 @@ std::vector<CircleOnMap> CircleMap::getAll()
     {
         if (c.brown_votes >= c.gold_votes &&
             c.brown_votes >= c.beige_votes &&
+            c.brown_votes >= c.whsq_votes &&
             c.brown_votes >= _params.min_detections)
             out.push_back({CircleColor::Brown, c.position});
         else if (c.gold_votes >= c.brown_votes &&
                  c.gold_votes >= c.beige_votes &&
+                 c.gold_votes >= c.whsq_votes &&
                  c.gold_votes >= _params.min_detections)
             out.push_back({CircleColor::Gold, c.position});
-        else if (c.beige_votes >= _params.min_detections)
+        else if (c.beige_votes >= c.brown_votes &&
+                 c.beige_votes >= c.gold_votes &&
+                 c.beige_votes >= c.whsq_votes &&
+                 c.beige_votes >= _params.min_detections)
             out.push_back({CircleColor::Beige, c.position});
+        else if (c.whsq_votes >= _params.min_detections)
+            out.push_back({CircleColor::WhiteSquare, c.position});
     }
     return out;
 }
@@ -185,16 +196,29 @@ void CircleMap::draw(cv::InputOutputArray canvas)
         if (!px.inside(cv::Rect(cv::Point(0, 0), canvas.size())))
             continue;
 
-        circle(
-            canvas,
-            px,
-            0.5 * px_per_m,
-            c.color == CircleColor::Brown
-                ? cv::Scalar(69, 109, 146) :
-            c.color == CircleColor::Gold
-                ? cv::Scalar(69, 205, 255)
-                : cv::Scalar(216, 244, 233),
-            cv::FILLED
-        );
+        if (c.color != CircleColor::WhiteSquare)
+        {
+            cv::circle(
+                canvas,
+                px,
+                0.5 * px_per_m,
+                c.color == CircleColor::Brown
+                    ? cv::Scalar(69, 109, 146) :
+                c.color == CircleColor::Gold
+                    ? cv::Scalar(69, 205, 255)
+                    : cv::Scalar(216, 244, 233),
+                cv::FILLED
+            );
+        }
+        else
+        {
+            cv::rectangle(
+                canvas,
+                px - cv::Point(0.5 * px_per_m, 0.5 * px_per_m),
+                px + cv::Point(0.5 * px_per_m, 0.5 * px_per_m),
+                cv::Scalar(216, 244, 233),
+                cv::FILLED
+            );
+        }
     }
 }

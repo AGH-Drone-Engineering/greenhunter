@@ -25,6 +25,7 @@ public:
         int brown_votes;
         int gold_votes;
         int beige_votes;
+        int whsq_votes;
     };
 
     explicit CircleMap(const Params &params);

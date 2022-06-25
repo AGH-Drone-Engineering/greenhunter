@@ -167,6 +167,13 @@ void MapClient::handleLine(const std::string &line)
             {lon, lat},
         });
     }
+    else if (color == "WHITESQUARE")
+    {
+        _circles.push_back({
+            CircleColor::WhiteSquare,
+            {lon, lat},
+        });
+    }
     else
     {
         cerr << "[MapClient] Invalid circle color: " << color << endl;

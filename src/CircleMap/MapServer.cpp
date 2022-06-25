@@ -83,8 +83,10 @@ void MapServer::Connection::writeAsync()
             << (c.color == CircleColor::Brown
                     ? "BROWN" :
                 c.color == CircleColor::Gold
-                    ? "GOLD"
-                    : "BEIGE")
+                    ? "GOLD" :
+                c.color == CircleColor::Beige
+                    ? "BEIGE"
+                    : "WHITESQUARE")
             << "\n";
     }
     msg << "\n";
