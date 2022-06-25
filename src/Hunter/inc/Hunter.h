@@ -53,6 +53,12 @@ private:
         SHOOT,
     };
 
+    void reset();
+
+    void mainLoop();
+
+    bool aimLoop();
+
     void onMapUpdate(const std::vector<CircleOnMap> &circles);
 
     void onArrived();
@@ -65,7 +71,7 @@ private:
 
     void goToNearest();
 
-    void shoot();
+    void markVisited(const Position &position);
 
     boost::optional<CircleOnMap> getNearest() const;
 
@@ -75,7 +81,6 @@ private:
     const Params _params;
 
     boost::mutex _mtx;
-    boost::condition_variable _approach_cond;
     boost::condition_variable _telemetry_cond;
 
     MissionLogger _logger;
@@ -91,6 +96,7 @@ private:
     boost::optional<CircleOnMap> _current_target;
 
     State _state;
+    int _aim_retries;
 };
 
 #endif

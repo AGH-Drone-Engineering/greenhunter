@@ -30,6 +30,8 @@ private:
 
     void readAsync();
 
+    void handleLine(const std::string &line);
+
     Params _params;
     UpdateCallback _update_callback;
 

@@ -119,37 +119,51 @@ void MapClient::readAsync()
                 return;
             }
 
-            size_t i, j;
-            double lon = std::stod(line, &i);
-            double lat = std::stod(line.substr(i + 1), &j);
-            std::string color = line.substr(i + j + 2);
-            if (color == "BROWN")
+            try
             {
-                _circles.push_back({
-                    CircleColor::Brown,
-                    {lon, lat},
-                });
+                handleLine(line);
             }
-            else if (color == "GOLD")
+            catch (const std::exception &ex)
             {
-                _circles.push_back({
-                    CircleColor::Gold,
-                    {lon, lat},
-                });
-            }
-            else if (color == "BEIGE")
-            {
-                _circles.push_back({
-                    CircleColor::Beige,
-                    {lon, lat},
-                });
-            }
-            else
-            {
-                cerr << "[MapClient] Invalid circle color: " << color << endl;
+                cerr << "[MapClient] Parsing error: "
+                     << ex.what()
+                     << endl;
             }
 
             readAsync();
         }
     );
+}
+
+void MapClient::handleLine(const std::string &line)
+{
+    size_t i, j;
+    double lon = std::stod(line, &i);
+    double lat = std::stod(line.substr(i + 1), &j);
+    std::string color = line.substr(i + j + 2);
+    if (color == "BROWN")
+    {
+        _circles.push_back({
+            CircleColor::Brown,
+            {lon, lat},
+        });
+    }
+    else if (color == "GOLD")
+    {
+        _circles.push_back({
+            CircleColor::Gold,
+            {lon, lat},
+        });
+    }
+    else if (color == "BEIGE")
+    {
+        _circles.push_back({
+            CircleColor::Beige,
+            {lon, lat},
+        });
+    }
+    else
+    {
+        cerr << "[MapClient] Invalid circle color: " << color << endl;
+    }
 }

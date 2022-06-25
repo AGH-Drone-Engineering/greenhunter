@@ -4,6 +4,7 @@
 #include <functional>
 
 using std::cout;
+using std::cerr;
 using std::endl;
 using namespace std::placeholders;
 
@@ -81,7 +82,6 @@ void Hunter::goToNearest()
     {
         _current_target = *nearest;
         _state = State::APPROACH;
-        _approach_cond.notify_one();
         return;
     }
 
@@ -104,17 +104,23 @@ void Hunter::goToNearest()
 
 void Hunter::onMapUpdate(const std::vector<CircleOnMap> &circles)
 {
-    b::lock_guard lock(_mtx);
-    _logger.logMap(circles);
-    _targets = filterTargets(circles);
+    try
+    {
+        b::lock_guard lock(_mtx);
+        _logger.logMap(circles);
+        _targets = filterTargets(circles);
+    }
+    catch (const std::exception &ex)
+    {
+        cerr << "[Hunter] onMapUpdate: "
+             << ex.what()
+             << endl;
+    }
 }
 
 void Hunter::onArrived()
 {
-    b::lock_guard lock(_mtx);
 
-    cout << "[Hunter] Arrived at waypoint"
-         << endl;
 }
 
 void Hunter::onShot()
@@ -131,112 +137,17 @@ void Hunter::onShot()
 
 void Hunter::onPosition(const Telemetry &telemetry)
 {
-    b::lock_guard lock(_mtx);
-    _telemetry = telemetry;
-    _telemetry_cond.notify_one();
-    dispatchMove();
-    _logger.logTelemetry(telemetry);
-}
-
-void Hunter::run()
-{
-    for (;;)
+    try
     {
-        b::unique_lock lock(_mtx);
-
-        while (_state != State::APPROACH)
-            _approach_cond.wait(lock);
-
-        _logger.logAction("AIM", *_current_target);
-
-        lock.unlock();
-
-        cout << "[Hunter] Starting visual approach"
-             << endl;
-
-        cv::Mat frame;
-
-        int retries = _params.correction_tries;
-
-        for (;;)
-        {
-            lock.lock();
-            _telemetry_cond.wait(lock);
-            const auto telem = *_telemetry;
-            lock.unlock();
-
-            _cap.read(frame);
-
-            const auto circles = _detector.detectCircles(frame, telem.altitude);
-            if (circles.empty())
-            {
-                if (!--retries)
-                {
-                    cout << "[Hunter] Could not find target"
-                         << endl;
-                    lock.lock();
-                    _logger.logAction("MISS", *_current_target);
-                    _visited.push_back(_current_target->position);
-                    _targets = filterTargets(_targets);
-                    _state = State::IDLE;
-                    _current_target = b::none;
-                    lock.unlock();
-                    break;
-                }
-                continue;
-            }
-
-            retries = _params.correction_tries;
-
-            cv::Point2f center(
-                frame.size().width * 0.5f,
-                frame.size().height * 0.5f
-            );
-
-            auto nearest = circles.cbegin();
-            double nearest_dist = cv::norm(
-                nearest->ellipse.center - center
-            );
-
-            for (auto c = ++circles.cbegin(); c != circles.cend(); ++c)
-            {
-                double dist = cv::norm(
-                    c->ellipse.center - center
-                );
-                if (dist < nearest_dist)
-                {
-                    nearest = c;
-                    nearest_dist = dist;
-                }
-            }
-
-            auto target = _localizer.localize(
-                *nearest,
-                telem,
-                _params.camera
-            );
-
-            if (bg::distance(
-                target.position,
-                telem.position) < _params.shooting_dist)
-            {
-                lock.lock();
-                _logger.logCircleImage(*_current_target, frame);
-                _logger.logAction("SHOOT", *_current_target);
-                shoot();
-                lock.unlock();
-                break;
-            }
-            else
-            {
-                lock.lock();
-                _current_target->position = target.position;
-                lock.unlock();
-                _mav.sendGoTo(target.position);
-            }
-        }
-
-        cout << "[Hunter] Approach complete"
+        b::lock_guard lock(_mtx);
+        _telemetry = telemetry;
+        _telemetry_cond.notify_one();
+        _logger.logTelemetry(telemetry);
+    }
+    catch (const std::exception &ex)
+    {
+        cerr << "[Hunter] onPosition: "
+             << ex.what()
              << endl;
     }
 }
@@ -292,13 +203,144 @@ Hunter::filterTargets(const std::vector<CircleOnMap> &circles) const
     return out;
 }
 
-void Hunter::shoot()
+void Hunter::run()
 {
-    cout << "[Hunter] Shooting"
+    for (;;)
+    {
+        try
+        {
+            mainLoop();
+        }
+        catch (const std::exception &ex)
+        {
+            cerr << "[Hunter] mainLoop: "
+                 << ex.what()
+                 << endl;
+            b::lock_guard lock(_mtx);
+            reset();
+        }
+    }
+}
+
+void Hunter::mainLoop()
+{
+    {
+        b::unique_lock lock(_mtx);
+        _telemetry_cond.wait(lock);
+        dispatchMove();
+        if (_state != State::APPROACH)
+            return;
+        _logger.logAction("AIM", *_current_target);
+    }
+
+    cout << "[Hunter] Starting visual approach"
          << endl;
-    _mav.sendShoot(_current_target->color);
-    _visited.push_back(_current_target->position);
-    _targets = filterTargets(_targets);
-    _state = State::SHOOT;
+
+    _aim_retries = _params.correction_tries;
+
+    while (!aimLoop());
+
+    cout << "[Hunter] Approach complete"
+         << endl;
+}
+
+bool Hunter::aimLoop()
+{
+    Telemetry telem;
+
+    {
+        b::unique_lock lock(_mtx);
+        _telemetry_cond.wait(lock);
+        telem = *_telemetry;
+    }
+
+    cv::Mat frame;
+    _cap.read(frame);
+
+    const auto circles = _detector.detectCircles(frame, telem.altitude);
+
+    if (circles.empty())
+    {
+        if (!--_aim_retries)
+        {
+            cout << "[Hunter] Could not find target"
+                 << endl;
+            {
+                b::unique_lock lock(_mtx);
+                _logger.logAction("MISS", *_current_target);
+                markVisited(_current_target->position);
+                reset();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    _aim_retries = _params.correction_tries;
+
+    cv::Point2f center(
+        frame.size().width * 0.5f,
+        frame.size().height * 0.5f
+    );
+
+    auto nearest = circles.cbegin();
+    double nearest_dist = cv::norm(
+        nearest->ellipse.center - center
+    );
+
+    for (auto c = ++circles.cbegin(); c != circles.cend(); ++c)
+    {
+        double dist = cv::norm(
+            c->ellipse.center - center
+        );
+        if (dist < nearest_dist)
+        {
+            nearest = c;
+            nearest_dist = dist;
+        }
+    }
+
+    auto target = _localizer.localize(
+        *nearest,
+        telem,
+        _params.camera
+    );
+
+    if (bg::distance(
+        target.position,
+        telem.position) < _params.shooting_dist)
+    {
+        b::unique_lock lock(_mtx);
+        cout << "[Hunter] Shooting"
+             << endl;
+        _mav.sendShoot(_current_target->color);
+        _logger.logCircleImage(*_current_target, frame);
+        _logger.logAction("SHOOT", *_current_target);
+        markVisited(_current_target->position);
+        _state = State::SHOOT;
+        _current_target = b::none;
+        return true;
+    }
+    else
+    {
+        {
+            b::unique_lock lock(_mtx);
+            _current_target->position = target.position;
+        }
+        _mav.sendGoTo(target.position);
+    }
+
+    return false;
+}
+
+void Hunter::reset()
+{
+    _state = State::IDLE;
     _current_target = b::none;
+}
+
+void Hunter::markVisited(const Position &position)
+{
+    _visited.push_back(position);
+    _targets = filterTargets(_targets);
 }
