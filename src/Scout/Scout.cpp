@@ -32,29 +32,62 @@ Scout::Scout(boost::asio::io_context &io_context,
 
 void Scout::run()
 {
-    namedWindow("Detections", WINDOW_NORMAL);
-    namedWindow("Map", WINDOW_NORMAL);
+    namedWindow("Detections", WINDOW_KEEPRATIO);
+    namedWindow("Map", WINDOW_KEEPRATIO);
 
     for (;;)
     {
-        _drone.waitInAir(_params.min_altitude);
-        auto frameTelemetryOpt = _drone.getFrameWithTelemetry();
-        if (!frameTelemetryOpt)
+        try
         {
-            cout << "[Scout] Waiting for telemetry"
-                 << endl;
-            _drone.waitTelemetryValid();
-            cout << "[Scout] Running"
-                 << endl;
-            continue;
+            if (mainLoop())
+                break;
         }
-        auto frameTelemetry = *frameTelemetryOpt;
+        catch (const std::exception &ex)
+        {
+            cerr << "[Scout] mainLoop: "
+                 << ex.what()
+                 << endl;
+        }
+    }
+}
 
+bool Scout::mainLoop()
+{
+    _drone.waitInAir(_params.min_altitude);
+    auto frameTelemetryOpt = _drone.getFrameWithTelemetry();
+    if (!frameTelemetryOpt)
+    {
+        _drone.waitTelemetryValid();
+        return false;
+    }
+    auto frameTelemetry = *frameTelemetryOpt;
+
+    auto frameCircles = _detector.detectCircles(frameTelemetry.frame, frameTelemetry.telemetry.altitude);
+
+    for (const auto &c : frameCircles)
+    {
+        _map.push(_localizer.localize(
+            c,
+            frameTelemetry.telemetry,
+            _params.drone.camera
+        ));
+    }
+
+    try
+    {
+        _logger.logMap(_map.getAll());
         _logger.logTelemetry(frameTelemetry.telemetry);
         _logger.logFlightImage(frameTelemetry.frame);
+    }
+    catch (const std::exception &ex)
+    {
+        cerr << "[Scout] Log error: "
+             << ex.what()
+             << endl;
+    }
 
-        auto frameCircles = _detector.detectCircles(frameTelemetry.frame, frameTelemetry.telemetry.altitude);
-
+    try
+    {
         Mat canvas = frameTelemetry.frame.clone();
         for (const auto &c : frameCircles)
         {
@@ -75,27 +108,18 @@ void Scout::run()
                     break;
             }
         }
-
         imshow("Detections", canvas);
-
-        std::for_each(
-            frameCircles.cbegin(),
-            frameCircles.cend(),
-            [&] (const CircleOnFrame &c) {
-                _map.push(_localizer.localize(c,
-                    frameTelemetry.telemetry,
-                    _params.drone.camera
-                ));
-            }
-        );
-
-        _logger.logMap(_map.getAll());
 
         canvas = Mat::zeros(1024, 1024, CV_8UC3);
         _map.draw(canvas);
-
         imshow("Map", canvas);
-
-        if (waitKey(1) == 'q') break;
     }
+    catch (const std::exception &ex)
+    {
+        cerr << "[Scout] Drawing error: "
+             << ex.what()
+             << endl;
+    }
+
+    return waitKey(1) == 'q';
 }

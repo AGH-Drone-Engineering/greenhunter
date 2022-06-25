@@ -37,6 +37,8 @@ public:
     void run();
 
 private:
+    bool mainLoop();
+
     Params _params;
     Drone _drone;
     CIRCLE_DETECTOR _detector;
