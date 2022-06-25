@@ -33,14 +33,33 @@ boost::optional<Telemetry> TelemetryServer::latest()
 void TelemetryServer::waitValid()
 {
     boost::unique_lock lock(_mtx);
-    while (!isValid()) _valid_cond.wait(lock);
+    if (!isValid())
+    {
+        cout << "[TelemetryServer] Waiting for telemetry"
+             << endl;
+        do
+        {
+            _valid_cond.wait(lock);
+        } while (!isValid());
+        cout << "[TelemetryServer] Got telemetry"
+             << endl;
+    }
 }
 
 void TelemetryServer::waitInAir(double altitude)
 {
     boost::unique_lock lock(_mtx);
-    while (!isValid() || _telemetry.altitude < altitude)
-        _valid_cond.wait(lock);
+    if (!isValid() || _telemetry.altitude < altitude)
+    {
+        cout << "[TelemetryServer] Waiting for altitude"
+             << endl;
+        do
+        {
+            _valid_cond.wait(lock);
+        } while (!isValid() || _telemetry.altitude < altitude);
+        cout << "[TelemetryServer] Reached altitude"
+             << endl;
+    }
 }
 
 bool TelemetryServer::isValid()
@@ -67,11 +86,11 @@ void TelemetryServer::handleAccept(Connection::pointer conn,
 {
     if (err)
     {
-        cerr << "Connection error" << endl;
+        cerr << "[TelemetryServer] Connection error" << endl;
     }
     else
     {
-        cout << "New connection" << endl;
+        cout << "[TelemetryServer] New connection" << endl;
         conn->startRead();
     }
     startAccept();
@@ -132,7 +151,7 @@ void TelemetryServer::Connection::handleRead(const boost::system::error_code &er
     else
     {
         _socket.close();
-        cout << "Closed" << endl;
+        cout << "[TelemetryServer] Closed" << endl;
     }
 }
 
@@ -149,31 +168,27 @@ void TelemetryServer::Connection::handleLine(std::string line)
         switch (type)
         {
             case 'y':
-                cout << "Got yaw " << val << endl;
                 _server._telemetry.azimuth = val * boost::geometry::math::d2r<double>();
                 _server._azi_valid = true;
                 break;
 
             case 'l':
-                cout << "Got latitude " << val << endl;
                 _server._telemetry.position.set<1>(val * boost::geometry::math::d2r<double>());
                 _server._lat_valid = true;
                 break;
 
             case 'g':
-                cout << "Got longitude " << val << endl;
                 _server._telemetry.position.set<0>(val * boost::geometry::math::d2r<double>());
                 _server._lon_valid = true;
                 break;
 
             case 'a':
-                cout << "Got altitude " << val << endl;
                 _server._telemetry.altitude = val;
                 _server._alt_valid = true;
                 break;
 
             default:
-                cout << "Got unknown type '" << type << "'" << endl;
+                cout << "[TelemetryServer] Got unknown type '" << type << "'" << endl;
                 break;
         }
     }
