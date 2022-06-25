@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <chrono>
 #include <opencv2/core.hpp>
 #include <boost/thread.hpp>
 #include <boost/asio.hpp>
@@ -39,14 +40,14 @@ public:
     void logMap(const std::vector<CircleOnMap> &circles);
 
 private:
-    long getTimestamp() const;
+    std::chrono::milliseconds getTimestamp() const;
 
     boost::asio::io_context &_context;
     const Params _params;
     const boost::filesystem::path _mission_path;
-    const long _mission_start;
+    const std::chrono::steady_clock::time_point _mission_start;
     boost::mutex _mtx;
-    int _n_flight_images;
+    long _n_flight_images;
 };
 
 #endif

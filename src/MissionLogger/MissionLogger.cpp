@@ -20,9 +20,9 @@ MissionLogger::MissionLogger(ba::io_context &context,
     , _params(params)
     , _mission_path(
         _params.root_path / to_string(
-            system_clock::now().time_since_epoch().count()
+            chrono::duration_cast<chrono::seconds>(system_clock::now().time_since_epoch()).count()
         ))
-    , _mission_start(steady_clock::now().time_since_epoch().count())
+    , _mission_start(steady_clock::now())
     , _n_flight_images(0)
 {
     _context.post([this] {
@@ -44,7 +44,7 @@ MissionLogger::MissionLogger(ba::io_context &context,
 
 void MissionLogger::logAction(const std::string &action, const CircleOnMap &circle)
 {
-    const auto t = getTimestamp();
+    const auto t = getTimestamp().count();
     _context.post([this, t, action, circle] {
         b::lock_guard lock(_mtx);
         bfs::fstream fs;
@@ -86,7 +86,7 @@ void MissionLogger::logFlightImage(cv::InputArray &img)
 
 void MissionLogger::logTelemetry(const Telemetry &telemetry)
 {
-    const auto t = getTimestamp();
+    const auto t = getTimestamp().count();
     _context.post([this, t, telemetry] {
         b::lock_guard lock(_mtx);
         bfs::fstream fs;
@@ -116,7 +116,7 @@ void MissionLogger::logMap(const std::vector<CircleOnMap> &circles)
     });
 }
 
-long MissionLogger::getTimestamp() const
+chrono::milliseconds MissionLogger::getTimestamp() const
 {
-    return steady_clock::now().time_since_epoch().count() - _mission_start;
+    return chrono::duration_cast<chrono::milliseconds>(steady_clock::now() - _mission_start);
 }
