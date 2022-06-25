@@ -113,50 +113,16 @@ void TelemetryServer::Connection::handleRead(const boost::system::error_code &er
 {
     if (!err)
     {
-        std::istream is(&_buf);
-        std::string line;
-        std::getline(is, line, ',');
-        boost::algorithm::trim(line);
-
-        char type = line[0];
-        line.erase(0, 1);
-        double val = std::stod(line);
-
+        try
         {
-            boost::lock_guard guard(_server._mtx);
-            switch (type)
-            {
-                case 'y':
-                    cout << "Got yaw " << val << endl;
-                    _server._telemetry.azimuth = val * boost::geometry::math::d2r<double>();
-                    _server._azi_valid = true;
-                    break;
-
-                case 'l':
-                    cout << "Got latitude " << val << endl;
-                    _server._telemetry.position.set<1>(val * boost::geometry::math::d2r<double>());
-                    _server._lat_valid = true;
-                    break;
-
-                case 'g':
-                    cout << "Got longitude " << val << endl;
-                    _server._telemetry.position.set<0>(val * boost::geometry::math::d2r<double>());
-                    _server._lon_valid = true;
-                    break;
-
-                case 'a':
-                    cout << "Got altitude " << val << endl;
-                    _server._telemetry.altitude = val;
-                    _server._alt_valid = true;
-                    break;
-
-                default:
-                    cout << "Got unknown type '" << type << "'" << endl;
-                    break;
-            }
+            handleData();
         }
-
-        _server._valid_cond.notify_all();
+        catch (const std::exception &ex)
+        {
+            cerr << "[TelemetryServer] Parsing error: "
+                 << ex.what()
+                 << endl;
+        }
 
         startRead();
     }
@@ -165,4 +131,52 @@ void TelemetryServer::Connection::handleRead(const boost::system::error_code &er
         _socket.close();
         cout << "Closed" << endl;
     }
+}
+
+void TelemetryServer::Connection::handleData()
+{
+    std::istream is(&_buf);
+    std::string line;
+    std::getline(is, line, ',');
+    boost::algorithm::trim(line);
+
+    char type = line[0];
+    line.erase(0, 1);
+    double val = std::stod(line);
+
+    {
+        boost::lock_guard guard(_server._mtx);
+        switch (type)
+        {
+            case 'y':
+                cout << "Got yaw " << val << endl;
+                _server._telemetry.azimuth = val * boost::geometry::math::d2r<double>();
+                _server._azi_valid = true;
+                break;
+
+            case 'l':
+                cout << "Got latitude " << val << endl;
+                _server._telemetry.position.set<1>(val * boost::geometry::math::d2r<double>());
+                _server._lat_valid = true;
+                break;
+
+            case 'g':
+                cout << "Got longitude " << val << endl;
+                _server._telemetry.position.set<0>(val * boost::geometry::math::d2r<double>());
+                _server._lon_valid = true;
+                break;
+
+            case 'a':
+                cout << "Got altitude " << val << endl;
+                _server._telemetry.altitude = val;
+                _server._alt_valid = true;
+                break;
+
+            default:
+                cout << "Got unknown type '" << type << "'" << endl;
+                break;
+        }
+    }
+
+    _server._valid_cond.notify_all();
 }
