@@ -306,28 +306,29 @@ bool Hunter::aimLoop()
         _params.camera
     );
 
-    if (bg::distance(
-        target.position,
-        telem.position) < _params.shooting_dist)
     {
         b::unique_lock lock(_mtx);
-        cout << "[Hunter] Shooting"
-             << endl;
-        _mav.sendShoot(_current_target->color);
-        _logger.logCircleImage(*_current_target, frame);
-        _logger.logAction("SHOOT", *_current_target);
-        markVisited(_current_target->position);
-        _state = State::SHOOT;
-        _current_target = b::none;
-        return true;
-    }
-    else
-    {
-        {
-            b::unique_lock lock(_mtx);
-            _current_target->position = target.position;
-        }
+
+        _current_target->position = target.position;
         _mav.sendGoTo(target.position);
+
+        if (_state == State::APPROACH && bg::distance(
+            target.position,
+            telem.position) < _params.shooting_dist)
+        {
+            cout << "[Hunter] Shooting"
+                 << endl;
+            _mav.sendShoot(_current_target->color);
+            _logger.logAction("SHOOT", *_current_target);
+            markVisited(_current_target->position);
+            _state = State::SHOOT;
+        }
+        else if (_state == State::IDLE)
+        {
+            _logger.logCircleImage(*_current_target, frame);
+            _current_target = b::none;
+            return true;
+        }
     }
 
     return false;
