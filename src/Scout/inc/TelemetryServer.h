@@ -30,7 +30,7 @@ public:;
 
         void handleRead(const boost::system::error_code &err);
 
-        void handleData();
+        void handleLine(std::string line);
 
         TelemetryServer &_server;
         boost::asio::ip::tcp::socket _socket;

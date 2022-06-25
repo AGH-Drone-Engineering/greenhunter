@@ -124,19 +124,16 @@ MavClient::handleRead(const error_code &err,
         return;
     }
 
-    std::istream is(&_buf);
-    std::string line;
-    std::getline(is, line, '\n');
-
     try
     {
+        std::istream is(&_buf);
+        std::string line;
+        std::getline(is, line, '\n');
         handleLine(line);
     }
     catch (const std::exception &ex)
     {
-        cerr << "[MavClient] Error parsing '"
-             << line
-             << "': "
+        cerr << "[MavClient] Parsing error: "
              << ex.what()
              << endl;
     }

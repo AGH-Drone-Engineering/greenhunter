@@ -107,21 +107,23 @@ void MapClient::readAsync()
                 return;
             }
 
-            std::istream is(&_buf);
-            std::string line;
-            std::getline(is, line, '\n');
-
-            if (line.empty())
-            {
-                _update_callback(_circles);
-                _circles.clear();
-                readAsync();
-                return;
-            }
+            bool got_end = false;
 
             try
             {
-                handleLine(line);
+                std::istream is(&_buf);
+                std::string line;
+                std::getline(is, line, '\n');
+
+                if (line.empty())
+                {
+                    got_end = true;
+                    _update_callback(_circles);
+                }
+                else
+                {
+                    handleLine(line);
+                }
             }
             catch (const std::exception &ex)
             {
@@ -129,6 +131,9 @@ void MapClient::readAsync()
                      << ex.what()
                      << endl;
             }
+
+            if (got_end)
+                _circles.clear();
 
             readAsync();
         }

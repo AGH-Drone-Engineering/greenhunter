@@ -115,7 +115,10 @@ void TelemetryServer::Connection::handleRead(const boost::system::error_code &er
     {
         try
         {
-            handleData();
+            std::istream is(&_buf);
+            std::string line;
+            std::getline(is, line, ',');
+            handleLine(line);
         }
         catch (const std::exception &ex)
         {
@@ -133,11 +136,8 @@ void TelemetryServer::Connection::handleRead(const boost::system::error_code &er
     }
 }
 
-void TelemetryServer::Connection::handleData()
+void TelemetryServer::Connection::handleLine(std::string line)
 {
-    std::istream is(&_buf);
-    std::string line;
-    std::getline(is, line, ',');
     boost::algorithm::trim(line);
 
     char type = line[0];
